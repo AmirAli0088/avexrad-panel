@@ -8,10 +8,8 @@
 // ==============================================================================
 // پاکسازی کانال‌های تستی قبلی و شروع با صفر کانال (آماده دریافت پروژه‌های جدید)
 let initialChannels = JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]");
-if (initialChannels.some(c => c.id === "chn_avexgold")) {
-  initialChannels = [];
-  localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify([]));
-}
+initialChannels = initialChannels.filter(c => c && c.id && !c.id.includes("avexgold") && !c.name.includes("گلد") && !c.name.includes("Gold") && !c.target.includes("avexgold"));
+localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(initialChannels));
 
 let initialOrders = JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]");
 if (initialOrders.some(o => o.id === "ORD-101" || o.id === "ORD-102")) {
@@ -478,6 +476,12 @@ function renderActiveChannelDetails() {
     document.getElementById("activeChannelTitle").textContent = "هنوز کانالی متصل نشده است";
     document.getElementById("activeChannelTarget").textContent = "جهت شروع، روی «افزودن کانال جدید» کلیک کنید";
     document.getElementById("activeChannelPlatformIcon").textContent = "--";
+    const sig = document.getElementById("channelSignature");
+    if (sig) sig.value = "";
+    const forb = document.getElementById("channelForbiddenWords");
+    if (forb) forb.value = "";
+    const botHealth = document.getElementById("channelBotHealthSummary");
+    if (botHealth) botHealth.innerHTML = `<span class="text-slate-400">بدون اتصال فعال</span>`;
     return;
   }
 
@@ -760,12 +764,13 @@ function generateAiDraftPost() {
   output.value = "در حال ارتباط با مدل هوش مصنوعی Gemini 2.0 Flash و اعتبارسنجی حقایق...";
 
   setTimeout(() => {
-    output.value = `📊 گزارش تحلیلی بازار | ${topic}\n\n` +
-      `طبق آخرین داده‌های استخراج‌شده، روند نوسانات در ساعات اخیر نشان‌دهنده تثبیت نسبی شاخص‌هاست. کارشناسان معتقدند با توجه به سیگنال‌های بین‌المللی، حجم معاملات در محدوده امن قرار دارد.\n\n` +
-      `▫️ نرخ بازگشایی: تثبیت در کانال حمایتی\n` +
-      `▫️ پیش‌بینی کوتاه‌مدت: نوسان در دامنه ۱.۲ درصدی\n\n` +
-      `⚡️ تحلیل اختصاصی آژانس هوشمند اَوِکس‌راد\n` +
-      `🆔 @AvexRad_Market`;
+    const nl = String.fromCharCode(10);
+    output.value = "📊 گزارش تحلیلی بازار | " + topic + nl + nl +
+      "طبق آخرین داده‌های استخراج‌شده، روند نوسانات در ساعات اخیر نشان‌دهنده تثبیت نسبی شاخص‌هاست. کارشناسان معتقدند با توجه به سیگنال‌های بین‌المللی، حجم معاملات در محدوده امن قرار دارد." + nl + nl +
+      "▫️ نرخ بازگشایی: تثبیت در کانال حمایتی" + nl +
+      "▫️ پیش‌بینی کوتاه‌مدت: نوسان در دامنه ۱.۲ درصدی" + nl + nl +
+      "⚡️ تحلیل اختصاصی آژانس هوشمند اَوِکس‌راد" + nl +
+      "🆔 @avexrad_channel";
     addLiveLog(`پیش‌نویس پست با هوش مصنوعی برای موضوع «${topic}» ایجاد شد.`, "success");
   }, 900);
 }
@@ -821,7 +826,8 @@ async function publishApprovedPost() {
     if (rawToken.startsWith("ENC::")) {
       rawToken = rawToken.replace("ENC::", "");
     }
-    const fullText = text + (ch.signature ? "\n\n" + ch.signature : "");
+    const nl2 = String.fromCharCode(10, 10);
+    const fullText = text + (ch.signature ? nl2 + ch.signature : "");
     addLiveLog(`در حال ارسال مستقیم پست به ${ch.target}...`, "info");
 
     try {
@@ -836,7 +842,7 @@ async function publishApprovedPost() {
       const data = await res.json();
       if (data.ok) {
         addLiveLog(`✅ پست با موفقیت در کانال «${targetName}» منتشر شد. (شناسه پیام: ${data.result.message_id})`, "success");
-        alert(`✅ پست با موفقیت در کانال «${targetName}» منتشر گردید!\nشناسه پیام در تلگرام: ${data.result.message_id}`);
+        alert("✅ پست با موفقیت در کانال «" + targetName + "» منتشر گردید!" + String.fromCharCode(10) + "شناسه پیام در تلگرام: " + data.result.message_id);
         return;
       } else {
         addLiveLog(`❌ خطای تلگرام: ${data.description}`, "error");
@@ -941,13 +947,10 @@ function renderScheduledPostsTable() {
   const tbody = document.getElementById("scheduledPostsTableBody");
   if (!tbody) return;
   tbody.innerHTML = `
-    <tr class="hover:bg-slate-800/40">
-      <td class="py-2.5 px-3 font-bold text-cyan-300">کانال طلا و ارز</td>
-      <td class="py-2.5 px-3 text-slate-300">گزارش لحظه‌ای نرخ دلار آزاد و درهم دبی</td>
-      <td class="py-2.5 px-3 text-purple-400 flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5"></i> پوستر آماری</td>
-      <td class="py-2.5 px-3 font-mono text-slate-300">۱۵:۰۰ (امروز)</td>
-      <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px]">در صف خودکار</span></td>
-      <td class="py-2.5 px-3 text-left"><button class="text-rose-400 text-xs hover:underline">لغو</button></td>
+    <tr>
+      <td colspan="6" class="py-8 text-center text-slate-500 text-xs">
+        هیچ پست زمان‌بندی‌شده‌ای در صف انتشار وجود ندارد.
+      </td>
     </tr>
   `;
 }
@@ -1066,7 +1069,11 @@ function saveGasConfig() {
 }
 
 function openSupportModal() {
-  alert("پشتیبانی اختصاصی اَوِکس‌راد (VIP 24/7):\nارتباط مستقیم تلگرام: @AvexRad_Support\nپشتیبانی بله و روبیکا: @AvexRad_Admin\nتلفن مدیران ارشد: امیرعلی عبدالعظیمی & امیرمهدی افضلی");
+  const nl = String.fromCharCode(10);
+  alert("پشتیبانی اختصاصی اَوِکس‌راد (VIP 24/7):" + nl +
+    "ارتباط مستقیم تلگرام: @AvexRad" + nl +
+    "پشتیبانی بله و روبیکا: @AvexRad" + nl +
+    "تلفن مدیران ارشد: امیرعلی عبدالعظیمی & امیرمهدی افضلی");
 }
 
 function openProfileModal() {
