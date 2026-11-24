@@ -108,78 +108,174 @@
   <div id="dashboardAppView" class="hidden min-h-screen">
 
   <!-- ========================================================================= -->
-  <!-- ۱. نوار وضعیت بالا (Top Status Bar)                                        -->
+  <!-- منوی کشویی موبایل (Mobile Navigation Drawer)                               -->
   <!-- ========================================================================= -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 py-2.5">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+  <div id="drawerBackdrop" onclick="closeMobileDrawer()" class="drawer-backdrop"></div>
+  
+  <div id="mobileDrawer" class="mobile-drawer">
+    <!-- هدر منوی کشویی -->
+    <div class="p-4 border-b border-white/10 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-black text-cyan-400 text-sm">AR</div>
+        <div>
+          <div class="font-bold text-xs text-white" id="drawerUserName">امیرعلی عبدالعظیمی</div>
+          <span class="text-[10px] text-cyan-400 font-mono" id="drawerUserRole">مدیر ارشد (VIP)</span>
+        </div>
+      </div>
+      <button onclick="closeMobileDrawer()" class="p-1 rounded-lg text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- سهمیه‌ها در منوی کشویی -->
+    <div class="p-3 border-b border-white/5 space-y-2 text-xs">
+      <div class="text-[11px] font-bold text-slate-400 flex items-center justify-between">
+        <span>سهمیه‌های امروز شما:</span>
+        <span id="drawerPlanBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">حرفه‌ای VIP</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="p-2 rounded-xl bg-slate-900 border border-white/5 space-y-0.5">
+          <span class="text-[10px] text-slate-400">عکس امروز:</span>
+          <div id="drawerImgQuota" class="font-bold text-purple-300 persian-nums text-xs">نامحدود</div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-900 border border-white/5 space-y-0.5">
+          <span class="text-[10px] text-slate-400">ویدیو:</span>
+          <div id="drawerVidQuota" class="font-bold text-cyan-300 persian-nums text-xs">نامحدود</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- لینک‌های ناوبری اصلی -->
+    <nav class="p-3 space-y-1.5 flex-1 overflow-y-auto">
+      <button onclick="switchTab('tabChannels'); closeMobileDrawer();" class="w-full text-right p-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+        <span class="flex items-center gap-2"><i data-lucide="radio" class="w-4 h-4"></i> مدیریت کانال‌ها و ربات</span>
+        <i data-lucide="chevron-left" class="w-4 h-4 text-cyan-400"></i>
+      </button>
+
+      <button onclick="switchTab('tabStudio'); closeMobileDrawer();" id="drawerTabStudio" class="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-900 transition flex items-center justify-between">
+        <span class="flex items-center gap-2"><i data-lucide="wand-2" class="w-4 h-4 text-purple-400"></i> استودیو هوش مصنوعی</span>
+        <span id="drawerLockStudio" class="tab-locked-badge hidden">🔒 قفل</span>
+      </button>
+
+      <button onclick="switchTab('tabScheduler'); closeMobileDrawer();" id="drawerTabScheduler" class="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-900 transition flex items-center justify-between">
+        <span class="flex items-center gap-2"><i data-lucide="calendar-clock" class="w-4 h-4 text-amber-400"></i> تقویم زمان‌بندی هوشمند</span>
+        <span id="drawerLockScheduler" class="tab-locked-badge hidden">🔒 قفل</span>
+      </button>
+
+      <button onclick="switchTab('tabAnalytics'); closeMobileDrawer();" id="drawerTabAnalytics" class="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-900 transition flex items-center justify-between">
+        <span class="flex items-center gap-2"><i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i> آمار و گزارشات</span>
+        <span id="drawerLockAnalytics" class="tab-locked-badge hidden">🔒 قفل</span>
+      </button>
+
+      <button onclick="switchTab('tabHelp'); closeMobileDrawer();" class="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-900 transition flex items-center justify-between">
+        <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> راهنما و آموزش جامع سامانه</span>
+        <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-md">جدید</span>
+      </button>
+
+      <button onclick="switchTab('tabAdminOrders'); closeMobileDrawer();" id="drawerTabAdmin" class="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-amber-300 hover:bg-amber-500/10 transition flex items-center justify-between border border-amber-500/20">
+        <span class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i> سفارشات و فرماندهی ارشد</span>
+        <span class="text-[10px] text-amber-400 font-bold persian-nums" id="drawerOrdersBadge">۰</span>
+      </button>
+    </nav>
+
+    <!-- فوتر منوی کشویی -->
+    <div class="p-3 border-t border-white/10 space-y-2">
+      <button onclick="openSupportModal(); closeMobileDrawer();" class="w-full py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+        <i data-lucide="headset" class="w-4 h-4"></i>
+        <span>پشتیبانی VIP (@AvexRad)</span>
+      </button>
+      <button onclick="handleLogout()" class="w-full py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-rose-500/20">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>خروج از حساب</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- ۱. نوار وضعیت بالا (Top Status Bar) - کاملاً واکنش‌گرا و بهینه‌سازی شده        -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-3 sm:px-4 py-2 sm:py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
       
       <!-- لوگو و وضعیت آنلاین ربات -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 p-0.5 shadow-lg shadow-cyan-500/20">
-            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-cyan-400 text-lg">
-              AR
-            </div>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 p-0.5 shadow-lg shadow-cyan-500/20 shrink-0">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-cyan-400 text-sm sm:text-base">
+            AR
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-base tracking-wide bg-gradient-to-l from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">AVEX RAD</span>
-              <span id="planBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-semibold">
-                پلن حرفه‌ای VIP
-              </span>
-            </div>
-            <div class="flex items-center gap-1.5 text-xs text-slate-400">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="botHeartbeatStatus">موتور اتوماسیون: آنلاین و آماده ارسال</span>
-            </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="font-extrabold text-sm sm:text-base tracking-wide bg-gradient-to-l from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">AVEX RAD</span>
+            <span id="planBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-semibold">
+              پلن حرفه‌ای VIP
+            </span>
+          </div>
+          <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="botHeartbeatStatus">موتور اتوماسیون: آنلاین و آماده ارسال</span>
           </div>
         </div>
       </div>
 
-      <!-- وضعیت سهمیه‌ها و زمان اشتراک -->
-      <div class="flex items-center flex-wrap gap-2 text-xs">
+      <!-- وضعیت شبکه و اینترنت در مرکز هدر -->
+      <div id="topNetworkStatusPill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] sm:text-xs text-emerald-400 font-bold shadow-sm">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="topNetworkStatusText">آنلاین · ۹۸ms</span>
+      </div>
+
+      <!-- نوار ابزار دسکتاپ (مخصوص تبلت و دسکتاپ) -->
+      <div class="hidden md:flex items-center gap-2 text-xs">
         
-        <!-- سهمیه تصویر روزانه -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
-          <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
-          <span>سهمیه عکس امروز:</span>
-          <span id="imageQuotaText" class="font-bold text-purple-300 persian-nums">۷ از ۱۰ باقیمانده</span>
+        <!-- سهمیه عکس -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
+          <i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>عکس:</span>
+          <span id="imageQuotaText" class="font-bold text-purple-300 persian-nums">۱۰ از ۱۰</span>
         </div>
 
-        <!-- سهمیه ویدیو روزانه -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
-          <i data-lucide="video" class="w-4 h-4 text-cyan-400"></i>
-          <span>سهمیه ویدیو:</span>
-          <span id="videoQuotaText" class="font-bold text-cyan-300 persian-nums">۴۵ از ۶۰ ثانیه</span>
+        <!-- سهمیه ویدیو -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
+          <i data-lucide="video" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span>ویدیو:</span>
+          <span id="videoQuotaText" class="font-bold text-cyan-300 persian-nums">۶۰ ثانیه</span>
         </div>
 
-        <!-- روزهای باقیمانده اشتراک -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
-          <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-          <span id="subRemainingText" class="font-bold text-amber-300 persian-nums">۲۹ روز تا تمدید</span>
+        <!-- روزهای اشتراک -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/80 border border-white/5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span id="subRemainingText" class="font-bold text-amber-300 persian-nums">مادام‌العمر VIP</span>
         </div>
-
-        
 
         <!-- دکمه پشتیبانی ۲۴/۷ VIP -->
-        <button onclick="openSupportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold hover:brightness-110 transition shadow-md shadow-amber-500/20">
-          <i data-lucide="headset" class="w-4 h-4"></i>
-          <span>پشتیبانی VIP</span>
+        <button onclick="openSupportModal()" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold hover:brightness-110 transition shadow-sm">
+          <i data-lucide="headset" class="w-3.5 h-3.5"></i>
+          <span>پشتیبانی</span>
         </button>
 
-        <!-- حساب کاربری ادمین ارشد و تغییر رمز -->
+        <!-- حساب کاربری ادمین ارشد -->
         <button onclick="openProfileModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-purple-500/40 text-purple-300 font-bold hover:bg-slate-800 transition shadow-sm">
           <i data-lucide="user-check" class="w-4 h-4 text-purple-400"></i>
           <span id="headerAdminUsername">AmirAli_AvexRad</span>
         </button>
 
-        <!-- دکمه خروج از حساب -->
-        <button onclick="handleLogout()" title="خروج از حساب کاربری" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 transition text-xs font-semibold">
-          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-          <span>خروج</span>
+        <!-- دکمه خروج -->
+        <button onclick="handleLogout()" title="خروج از حساب کاربری" class="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
         </button>
 
       </div>
+
+      <!-- دکمه‌های فشرده و اختصاصی موبایل (پروفایل + منوی کشویی) -->
+      <div class="flex md:hidden items-center gap-1.5">
+        <button onclick="openProfileModal()" class="p-2 rounded-xl bg-slate-900 border border-purple-500/30 text-purple-300 flex items-center justify-center shadow-sm" title="پروفایل و سهمیه‌ها">
+          <i data-lucide="user" class="w-4 h-4"></i>
+        </button>
+        <button onclick="openMobileDrawer()" class="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 flex items-center justify-center shadow-sm" title="منوی ناوبری">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+
     </div>
   </header>
 
@@ -188,8 +284,8 @@
   <!-- ========================================================================= -->
   <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-    <!-- کارت اعلان ادمین ارشد (مخصوص امیرعلی و امیرمهدی) -->
-    <div id="superAdminBanner" class="p-4 rounded-2xl glass-panel-gold flex flex-wrap items-center justify-between gap-4">
+    <!-- کارت اعلان ادمین ارشد (مخصوص امیرعلی و امیرمهدی - فقط روی تبلت و دسکتاپ تا صفحه گوشی خلوت بماند) -->
+    <div id="superAdminBanner" class="hidden sm:flex p-4 rounded-2xl glass-panel-gold flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
           <i data-lucide="crown" class="w-6 h-6"></i>
@@ -320,21 +416,29 @@
       <button onclick="switchTab('tabStudio')" id="navTabStudio" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="wand-2" class="w-4 h-4"></i>
         <span>استودیو چندرسانه‌ای AI</span>
+        <span id="lockBadgeStudio" class="tab-locked-badge hidden">🔒</span>
       </button>
 
       <button onclick="switchTab('tabScheduler')" id="navTabScheduler" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="calendar-clock" class="w-4 h-4"></i>
         <span>تقویم زمان‌بندی هوشمند</span>
+        <span id="lockBadgeScheduler" class="tab-locked-badge hidden">🔒</span>
       </button>
 
       <button onclick="switchTab('tabAnalytics')" id="navTabAnalytics" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="line-chart" class="w-4 h-4"></i>
         <span>آزمایشگاه آمار و ساخت نمودار</span>
+        <span id="lockBadgeAnalytics" class="tab-locked-badge hidden">🔒</span>
+      </button>
+
+      <button onclick="switchTab('tabHelp')" id="navTabHelp" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
+        <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i>
+        <span>راهنما و آموزش جامع</span>
       </button>
 
       <button onclick="switchTab('tabAdminOrders')" id="navTabAdminOrders" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30">
         <i data-lucide="shield-check" class="w-4 h-4"></i>
-        <span>فرماندهی ارشد و سفارشات فروش</span>
+        <span>فرماندهی ارشد و سفارشات</span>
       </button>
     </div>
 
@@ -495,8 +599,25 @@
     <!-- ========================================================================= -->
     <!-- ۵. محتوای تب ۲: استودیو چندرسانه‌ای AI (Multimedia AI Studio)             -->
     <!-- ========================================================================= -->
-    <div id="tabStudio" class="hidden space-y-6">
+    <div id="tabStudio" class="hidden space-y-6 relative min-h-[400px]">
       
+      <!-- قفل دروازه‌بان تب استودیو هنگامی که هیچ کانالی متصل نیست -->
+      <div id="gatekeeperLockStudio" class="locked-card-overlay hidden flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-xl shadow-purple-500/10">
+          <i data-lucide="lock" class="w-8 h-8"></i>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base sm:text-lg font-bold text-white">استودیو چندرسانه‌ای هوش مصنوعی قفل است</h3>
+          <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            جهت تولید محتوای هوشمند با Gemini 2.0 Flash، طراحی پوستر با لوگوی اختصاصی و تولید ریلز، ابتدا باید حداقل یک کانال ارتباطی فعال اضافه کنید.
+          </p>
+        </div>
+        <button onclick="openAddChannelModal(); switchTab('tabChannels');" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs hover:brightness-110 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>اتصال و فعال‌سازی اولین کانال</span>
+        </button>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- ۱. رادار موضوعات و ایده‌پرداز محتوا (Topic Radar & Fact-Checker) -->
@@ -646,7 +767,25 @@
     <!-- ========================================================================= -->
     <!-- ۶. محتوای تب ۳: تقویم زمان‌بندی هوشمند (Smart Scheduler)                   -->
     <!-- ========================================================================= -->
-    <div id="tabScheduler" class="hidden space-y-6">
+    <div id="tabScheduler" class="hidden space-y-6 relative min-h-[400px]">
+      
+      <!-- قفل دروازه‌بان تقویم زمان‌بندی -->
+      <div id="gatekeeperLockScheduler" class="locked-card-overlay hidden flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/10">
+          <i data-lucide="lock" class="w-8 h-8"></i>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base sm:text-lg font-bold text-white">تقویم و صف زمان‌بندی قفل است</h3>
+          <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            برای فعال‌سازی سناریوهای تکرارشونده روزانه (صبحگاهی، فوری، شبانه) و تنظیم صف انتشار، اتصال حداقل یک کانال الزامی است.
+          </p>
+        </div>
+        <button onclick="openAddChannelModal(); switchTab('tabChannels');" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs hover:brightness-110 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>اتصال و فعال‌سازی اولین کانال</span>
+        </button>
+      </div>
+
       <div class="p-5 rounded-2xl glass-panel space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
           <div>
@@ -713,8 +852,25 @@
     <!-- ========================================================================= -->
     <!-- ۷. محتوای تب ۴: آزمایشگاه آمار و ساخت نمودار (Analytics & Chart-to-Channel)  -->
     <!-- ========================================================================= -->
-    <div id="tabAnalytics" class="hidden space-y-6">
+    <div id="tabAnalytics" class="hidden space-y-6 relative min-h-[400px]">
       
+      <!-- قفل دروازه‌بان آزمایشگاه آمار -->
+      <div id="gatekeeperLockAnalytics" class="locked-card-overlay hidden flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/10">
+          <i data-lucide="lock" class="w-8 h-8"></i>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base sm:text-lg font-bold text-white">آزمایشگاه آمار و نمودار قفل است</h3>
+          <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            جهت مشاهده روند اعضا، تحلیل هیت‌مپ ساعات اوج تعامل و استفاده از قابلیت Chart-to-Channel، باید کانال هدف شما متصل باشد.
+          </p>
+        </div>
+        <button onclick="openAddChannelModal(); switchTab('tabChannels');" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs hover:brightness-110 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>اتصال و فعال‌سازی اولین کانال</span>
+        </button>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         <!-- نمودار رشد عضوگیری -->
@@ -762,6 +918,192 @@
             <span>تولید و ارسال نمودار به کانال فعال</span>
           </button>
         </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- تب جدید: راهنما و پایگاه دانش جامع سامانه (Knowledge Base & Guide)         -->
+    <!-- ========================================================================= -->
+    <div id="tabHelp" class="hidden space-y-6">
+      
+      <!-- هدر راهنما -->
+      <div class="p-5 rounded-2xl glass-panel space-y-2 border border-cyan-500/30">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+            <i data-lucide="book-open" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-white">راهنما، معماری فنی و آموزش جامع سامانه اَوِکس‌راد</h3>
+            <p class="text-xs text-slate-300">راهنمای کامل فعالیت ۲۴ ساعته ابری، اتصال پیام‌رسان‌ها، مکانیزم خلبان خودکار و مصرف توکن‌ها</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- کارت‌های ۴گانه آموزش جامع -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- ۱. معماری ابری و فعالیت ۲۴/۷ بدون نیاز به لپ‌تاپ -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <h4 class="font-bold text-sm text-cyan-300 flex items-center gap-2">
+              <i data-lucide="cloud-lightning" class="w-4 h-4 text-cyan-400"></i>
+              <span>۱. معماری ۲۴/۷ ابری و کارکرد بدون لپ‌تاپ</span>
+            </h4>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">۱۰۰٪ سرورلس ابری</span>
+          </div>
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <p>
+              ربات‌های فروش و ثبت سفارش اَوِکس‌راد بر بستر <strong class="text-white">Google Apps Script Webhook</strong> و زیرساخت جهانی Google Cloud میزبانی می‌شوند.
+            </p>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
+              <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>آیا در صورت خاموش بودن لپ‌تاپ ربات کار می‌کند؟</span>
+              </div>
+              <p class="text-[11px] text-slate-300">
+                <strong class="text-white">بله، کاملاً!</strong> پیام‌های مشتریان، انتخاب پلن، ارسال شماره کارت و دریافت تصویر فیش واریزی مستقیماً توسط وب‌هوک گوگل پردازش شده و در گوگل شیت ذخیره می‌شود. نیازی به روشن بودن لپ‌تاپ، اجرای پایتون یا باز بودن پنل نیست.
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/20 space-y-1">
+              <span class="font-bold text-cyan-300 block">نحوه اتصال ربات تلگرام به وب‌هوک ابری:</span>
+              <p class="text-[11px] text-slate-300">
+                کافیست توکن ربات فروش را در بخش تنظیمات وارد کرده و بر روی کلید «تست و همگام‌سازی وب‌هوک ۲۴/۷» کلیک کنید.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ۲. راهنمای اتصال پلتفرم‌ها (تلگرام، بله، روبیکا و نکته فنی ایتا) -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <h4 class="font-bold text-sm text-purple-300 flex items-center gap-2">
+              <i data-lucide="share-2" class="w-4 h-4 text-purple-400"></i>
+              <span>۲. راهنمای اتصال کانال‌ها (۴ پیام‌رسان)</span>
+            </h4>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">مستقل و تفکیک‌شده</span>
+          </div>
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+              <div class="font-bold text-cyan-300 mb-1 flex items-center gap-1.5">
+                <i data-lucide="send" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>تلگرام (Telegram):</span>
+              </div>
+              <p class="text-[11px] text-slate-300">از <code class="text-cyan-300">@BotFather</code> توکن ربات را بگیرید. ربات را به کانال اضافه کرده و دسترسی مدیر (Post Messages) بدهید. آیدی یا یوزرنیم کانال را وارد کنید.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+              <div class="font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>بله (Bale):</span>
+              </div>
+              <p class="text-[11px] text-slate-300">در بات‌فادر بازوی بله ربات خود را ساخته و توکن بگیرید. بازو را ادمین کانال کرده و شناسه کانال را ثبت کنید.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+              <div class="font-bold text-purple-300 mb-1 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>روبیکا (Rubika):</span>
+              </div>
+              <p class="text-[11px] text-slate-300">از سامانه BotPlatform روبیکا کلید احراز هویت وب‌سرویس را دریافت کنید و شناسه کانال را متصل نمایید.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/30">
+              <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>نکته فنی ویژه پیام‌رسان ایتا (Eitaa):</span>
+              </div>
+              <p class="text-[11px] text-amber-100/80 leading-relaxed">
+                برخلاف تلگرام، ایتا ربات‌ساز عمومی ندارد. بنابراین برای انتشار خودکار در کانال ایتا، باید از <strong class="text-white">وب‌سرویس ایتا‌یار (eitaayar.com)</strong> استفاده شود. توکن وب‌سرویس ایتا‌یار خود را در فیلد مربوطه در مودال اتصال وارد کنید.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ۳. راهنمای کلیدها و مکانیزم خلبان خودکار -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+              <span>۳. راهنمای کلیدها و خلبان خودکار (Autopilot)</span>
+            </h4>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">اتوماسیون هوشمند</span>
+          </div>
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>کلید خلبان خودکار (Master Autopilot):</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                وقتی روشن است، سیستم بدون نیاز به تایید دستی، در ساعات مقرر موضوعات وب را پایش کرده، تولید محتوا می‌کند و به کانال‌های فعال می‌فرستد. اگر خاموش باشد، محتواها به شکل پیش‌نویس در انتظار تایید شما می‌مانند.
+              </p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>کلید دستی رسانه روزانه (Media Override):</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                برای هر کانال مستقل تعیین می‌کند که آیا همراه با متن پست، پوستر گرافیکی تولید شود یا خیر. این کلید برای مدیریت مصرف بهینه سهمیه روزانه طراحی شده است.
+              </p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>زمان تا پست بعدی خودکار:</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                تایمر زنده نشان‌دهنده فاصله زمانی تا اسلات زمان‌بندی بعدی (ساعات ۹:۰۰، ۱۴:۰۰، ۱۸:۰۰ یا ۲۲:۰۰) است. هنگامی که هیچ کانالی متصل نباشد یا خلبان خودکار غیرفعال باشد، این شمارشگر در وضعیت استراحت قرار می‌گیرد.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ۴. مصرف توکن‌های AI و سقف پلن‌ها -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <h4 class="font-bold text-sm text-emerald-300 flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+              <span>۴. مصرف توکن‌های هوش مصنوعی و سهمیه‌ها</span>
+            </h4>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Gemini 2.0 Flash</span>
+          </div>
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>میزان مصرف توکن در هر پست:</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                هر پست هوشمند به طور متوسط بین <strong class="text-cyan-300">۴۰۰ الی ۸۰۰ توکن</strong> مصرف می‌کند (شامل تحلیل پرامپت، بررسی حقایق Fact-Checking، اعمال لحن اختصاصی و درج امضا).
+              </p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>قانون سقف تعداد کانال‌ها:</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                تعداد کانال‌های مجاز سقف کل است. به عنوان مثال اگر کاربر پلن پایه با سقف ۱ کانال داشته باشد، می‌تواند ۱ کانال را روی تلگرام، یا بله یا ایتا متصل کند. اگر بخواهد همان کانال را هم در ایتا و هم در بله داشته باشد، ۲ اتصال شمرده شده و نیاز به ارتقا به پلن حرفه‌ای خواهد داشت.
+              </p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+              <span class="font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="video" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>سهمیه رندر تصویر و ریلز:</span>
+              </span>
+              <p class="text-[11px] text-slate-300">
+                سهمیه بنر روزانه ۱۰ عدد و ریلز حداکثر ۶۰ ثانیه در روز است که هر شب ساعت ۰۰:۰۰ به صورت خودکار در دیتابیس ریست می‌شود.
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -931,6 +1273,17 @@
           </div>
         </div>
 
+        <!-- باکس راهنمای اختصاصی و هوشمند پلتفرم انتخابی -->
+        <div id="modalPlatformGuidance" class="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-slate-300 leading-relaxed space-y-1">
+          <div class="font-bold text-cyan-300 flex items-center gap-1.5" id="modalGuidanceTitle">
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+            <span>راهنمای اتصال تلگرام:</span>
+          </div>
+          <p id="modalGuidanceText" class="text-[11px] text-slate-300 leading-relaxed">
+            توکن ربات را از @BotFather دریافت کرده و ربات را در کانال ادمین با دسترسی ارسال پیام (Post Messages) کنید.
+          </p>
+        </div>
+
         <!-- نام نمایشی کانال -->
         <div class="space-y-1.5">
           <label class="text-xs font-semibold text-slate-300">نام نمایشی کانال در پنل:</label>
@@ -939,17 +1292,17 @@
 
         <!-- توکن ربات -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
-            <span>توکن ربات (Bot Token):</span>
-            <span class="text-[11px] text-cyan-400">ذخیره با رمزنگاری AES-256</span>
+          <label class="text-xs font-semibold text-slate-300 flex items-center justify-between" id="modalBotTokenLabel">
+            <span>توکن ربات (BotFather Token):</span>
+            <span class="text-[11px] text-cyan-400">ذخیره با رمزنگاری ابری</span>
           </label>
-          <input type="password" id="modalBotToken" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr focus:outline-none focus:border-cyan-400" placeholder="مثال: 123456789:AAFg8...">
+          <input type="password" id="modalBotToken" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr focus:outline-none focus:border-cyan-400 font-mono" placeholder="123456789:AAFg8...">
         </div>
 
         <!-- آیدی عددی یا یوزرنیم کانال -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-slate-300">آیدی عددی یا یوزرنیم کانال / گروه:</label>
-          <input type="text" id="modalChannelTarget" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr focus:outline-none focus:border-cyan-400" placeholder="مثال: @YourChannelName یا 100123456789-">
+          <label class="text-xs font-semibold text-slate-300" id="modalChannelTargetLabel">آیدی عددی یا یوزرنیم کانال / گروه:</label>
+          <input type="text" id="modalChannelTarget" class="w-full bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr focus:outline-none focus:border-cyan-400 font-mono" placeholder="@YourChannelName یا 100123456789-">
         </div>
 
         <!-- دکمه تست سلامت فوری -->
@@ -1015,24 +1368,24 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- ۱۱. مودال مدیریت پروفایل و تغییر رمز عبور (Admin Profile & Password)        -->
+  <!-- ۱۱. مودال مدیریت پروفایل و سهمیه‌ها (مشاهده مشخصات کاربری و سهمیه‌ها)        -->
   <!-- ========================================================================= -->
   <div id="profileModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="w-full max-w-md glass-panel rounded-2xl p-6 space-y-4 border border-purple-500/30 shadow-2xl">
       <div class="flex items-center justify-between border-b border-white/10 pb-3">
         <h3 class="font-bold text-sm text-purple-300 flex items-center gap-2">
           <i data-lucide="shield-check" class="w-4 h-4 text-purple-400"></i>
-          <span>پروفایل و امنیت مدیر ارشد</span>
+          <span>اطلاعات حساب کاربری و سهمیه‌ها</span>
         </h3>
         <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <!-- انتخاب سریع حساب کاربری ارشد -->
-        <div class="space-y-1">
-          <label class="text-slate-400">حساب کاربری ارشد فعال:</label>
+      <div class="space-y-4 text-xs">
+        <!-- سوئیچ سریع بین اکانت‌های ادمین (فقط برای مدیران ارشد) -->
+        <div id="adminUserSwitchSection" class="space-y-1">
+          <label class="text-slate-400 font-semibold">حساب کاربری فعال:</label>
           <div class="grid grid-cols-2 gap-2">
             <button type="button" onclick="switchAdminUser('AmirAli_AvexRad')" id="btnAdmin_AmirAli" class="py-2 px-2.5 rounded-xl border border-purple-400 bg-purple-500/20 text-purple-300 font-bold text-center">
               امیرعلی عبدالعظیمی
@@ -1043,25 +1396,85 @@
           </div>
         </div>
 
-        <div class="p-3 rounded-xl bg-slate-900/90 border border-white/5 space-y-1">
-          <div class="flex items-center justify-between">
+        <!-- کارت مشخصات ورود (فقط مشاهده با قابلیت کپی و دکمه چشم برای مشاهده رمز) -->
+        <div class="p-4 rounded-xl bg-slate-900/90 border border-white/10 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-white/5">
             <span class="text-slate-400">نام کاربری:</span>
-            <span id="profileUsernameDisplay" class="font-mono text-cyan-300 font-bold ltr">AmirAli_AvexRad</span>
+            <div class="flex items-center gap-2">
+              <span id="profileUsernameDisplay" class="font-mono text-cyan-300 font-bold ltr">AmirAli_AvexRad</span>
+              <button onclick="copyToClipboard(document.getElementById('profileUsernameDisplay').innerText, 'نام کاربری کپی شد')" class="text-slate-400 hover:text-cyan-300" title="کپی نام کاربری">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
           </div>
+
           <div class="flex items-center justify-between">
-            <span class="text-slate-400">رمز عبور فعلی:</span>
-            <span id="profilePasswordDisplay" class="font-mono text-amber-300 ltr">alipass88 (موقت)</span>
+            <span class="text-slate-400">رمز عبور:</span>
+            <div class="flex items-center gap-2">
+              <span id="profilePasswordDisplay" class="font-mono text-amber-300 ltr tracking-wider">••••••••</span>
+              <button onclick="toggleProfilePasswordVisibility()" id="btnToggleProfilePassword" class="text-slate-400 hover:text-amber-300" title="نمایش / پنهان‌سازی رمز">
+                <i data-lucide="eye" class="w-3.5 h-3.5" id="profilePasswordEyeIcon"></i>
+              </button>
+              <button onclick="copyCurrentPassword()" class="text-slate-400 hover:text-cyan-300" title="کپی رمز عبور">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- فرم تغییر رمز عبور -->
-        <div class="space-y-2 pt-2 border-t border-white/10">
-          <div class="font-bold text-slate-200">تنظیم رمز عبور دائمی جدید:</div>
-          <input type="password" id="newAdminPasswordInput" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr focus:outline-none focus:border-purple-400" placeholder="رمز عبور قوی جدید را وارد کنید">
-          <button onclick="submitChangeAdminPassword()" class="w-full py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs hover:brightness-110 transition shadow-md shadow-purple-600/20">
-            ذخیره و به‌روزرسانی رمز عبور
-          </button>
+        <!-- اخطار امنیتی عدم امکان تغییر خودسرانه رمز -->
+        <div class="p-2.5 rounded-xl bg-slate-950/60 border border-white/5 flex items-start gap-2 text-[11px] text-slate-400">
+          <i data-lucide="info" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
+          <span>جهت حفظ امنیت، تغییر نام کاربری و رمز عبور منحصراً از طریق پشتیبان فنی اَوِکس‌راد (@AvexRad) انجام می‌شود.</span>
         </div>
+
+        <!-- نوارهای سهمیه و منابع فعال حساب -->
+        <div class="space-y-2.5 pt-2 border-t border-white/10">
+          <div class="font-bold text-slate-200 flex items-center justify-between">
+            <span>سهمیه‌های مصرفی امروز:</span>
+            <span class="text-cyan-400 text-[10px]">ریست خودکار در ۰۰:۰۰ بامداد</span>
+          </div>
+
+          <!-- سهمیه عکس -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i> پوستر هوشمند:</span>
+              <span id="profileImageQuotaLabel" class="font-bold text-purple-300 persian-nums">۱۰ از ۱۰ باقی‌مانده</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div id="profileImageQuotaBar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-1.5 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- سهمیه ویدیو -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5"><i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i> ریلز سبک:</span>
+              <span id="profileVideoQuotaLabel" class="font-bold text-cyan-300 persian-nums">۶۰ ثانیه در روز</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div id="profileVideoQuotaBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- سقف کانال‌ها -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5"><i data-lucide="radio" class="w-3.5 h-3.5 text-emerald-400"></i> سقف کانال‌ها:</span>
+              <span id="profileChannelQuotaLabel" class="font-bold text-emerald-300 persian-nums">۰ از ۸ متصل</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div id="profileChannelQuotaBar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end pt-2">
+        <button onclick="closeModal('profileModal')" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition">
+          بستن پنجره
+        </button>
       </div>
     </div>
   </div>
