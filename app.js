@@ -18,7 +18,7 @@ const AppState = {
     "AmirMahdi_AvexRad": "mahdipass88"
   })),
   currentPlan: AVEXRAD_PLANS.super_admin,
-  gasEndpoint: localStorage.getItem("AVEXRAD_GAS_ENDPOINT") || "",
+  gasEndpoint: localStorage.getItem("AVEXRAD_GAS_ENDPOINT") || "https://script.google.com/macros/s/AKfycbyGzFTSuw_pnQrnwEithilZaNgj8vfWZS2bzYaRdRN46AUHLKExUy0Zaz66XJOwNf6w/exec",
   
   // اتصالات فعال کانال‌ها (کانال اول: پروژه واقعی AvexGold)
   channels: JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || JSON.stringify([
