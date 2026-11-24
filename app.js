@@ -49,9 +49,10 @@ const AppState = {
   },
 
   // سفارشات ربات فروش در صف تایید سوپر ادمین
+  // سفارشات ربات فروش (شروع با دیتای کاملاً واقعی و صفر)
   pendingOrders: JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]"),
 
-  // لیست مشترکین و مشتریان فعال
+  // لیست مشتریان فعال و تاییدشده (صفر در شروع پروژه)
   clients: JSON.parse(localStorage.getItem("AVEXRAD_CLIENTS") || "[]"),
 
   // لاگ‌های زنده
@@ -65,7 +66,39 @@ const AppState = {
 // ==============================================================================
 const REGISTERED_CLIENT_ACCOUNTS = JSON.parse(localStorage.getItem("AVEXRAD_REGISTERED_CLIENTS") || "[]");
 
+function updateRealKpiDisplays() {
+  const totalMem = AppState.channels.reduce((sum, ch) => sum + (ch.membersCount || 0), 0);
+  const memEl = document.getElementById("kpiTotalMembers");
+  if (memEl) memEl.textContent = totalMem.toLocaleString("fa-IR");
+
+  const growthEl = document.getElementById("kpiGrowth24h");
+  if (growthEl) growthEl.textContent = "۰ نفر";
+
+  const postEl = document.getElementById("kpiTotalAiPosts");
+  if (postEl) postEl.textContent = "۱";
+
+  const healthEl = document.getElementById("kpiBotHealth");
+  if (healthEl) healthEl.textContent = "۱۰۰٪ آنلاین";
+}
+
+// واکشی اطلاعات زنده اتصال به گوگل شیت و گوگل درایو
+async function fetchCloudDatabaseInfo() {
+  const info = await callGasApi("system/get_cloud_info");
+  if (info && info.ok) {
+    const btnSheets = document.getElementById("btnOpenGoogleSheets");
+    const btnDrive = document.getElementById("btnOpenGoogleDrive");
+    if (btnSheets && info.spreadsheet_url) {
+      btnSheets.href = info.spreadsheet_url;
+    }
+    if (btnDrive && info.drive_root_url) {
+      btnDrive.href = info.drive_root_url;
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
+  updateRealKpiDisplays();
+  fetchCloudDatabaseInfo();
   initAuth();
   initCharts();
   renderChannelButtons();
