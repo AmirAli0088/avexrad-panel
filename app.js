@@ -20,143 +20,35 @@ const AppState = {
   currentPlan: AVEXRAD_PLANS.super_admin,
   gasEndpoint: localStorage.getItem("AVEXRAD_GAS_ENDPOINT") || "",
   
-  // کانال‌های نمونه پیش‌فرض (تا ۸ کانال در پلن حرفه‌ای، نامحدود برای سوپر ادمین)
-  channels: [
-    {
-      id: "chn_1",
-      name: "طلا، ارز و سکه لحظه‌ای",
-      platform: "telegram",
-      target: "@AvexRad_Market",
-      token: "SAMPLE_ENCRYPTED_TOKEN_1",
-      aiPersona: "formal_news",
-      signature: "⚡️ تحلیل اختصاصی آژانس اَوِکس‌راد | @AvexRad_Market",
-      forbiddenWords: "لینک رقیب, تبلیغ غیراخلاقی",
-      allowImageToday: true,
-      isAutopilot: true,
-      status: "active",
-      membersCount: 18450
-    },
-    {
-      id: "chn_2",
-      name: "اخبار فناوری و هوش مصنوعی",
-      platform: "telegram",
-      target: "@AvexRad_Tech",
-      token: "SAMPLE_ENCRYPTED_TOKEN_2",
-      aiPersona: "expert_analytical",
-      signature: "🚀 مرجع هوش مصنوعی اَوِکس‌راد | @AvexRad_Tech",
-      forbiddenWords: "اسپم, کلیک‌بیت",
-      allowImageToday: true,
-      isAutopilot: true,
-      status: "active",
-      membersCount: 12200
-    },
-    {
-      id: "chn_3",
-      name: "کانال فروشگاهی پوشاک زنانه (بله)",
-      platform: "bale",
-      target: "ble.ir/avex_boutique",
-      token: "SAMPLE_BALE_TOKEN",
-      aiPersona: "marketing_sales",
-      signature: "🛍 بوتیک لوکس اَوِکس‌راد | ارسال فوری به سراسر کشور",
-      forbiddenWords: "ناموجود",
-      allowImageToday: false, // متوقف‌شده در امروز
-      isAutopilot: false,
-      status: "active",
-      membersCount: 7600
-    },
-    {
-      id: "chn_4",
-      name: "اخبار بورس و بازارهای مالی",
-      platform: "telegram",
-      target: "@AvexRad_Bourse",
-      token: "SAMPLE_TOKEN_4",
-      aiPersona: "formal_news",
-      signature: "📊 رصدخانه بورس اَوِکس‌راد",
-      forbiddenWords: "",
-      allowImageToday: true,
-      isAutopilot: true,
-      status: "active",
-      membersCount: 10000
-    }
-  ],
-  activeChannelId: "chn_1",
+  // اتصالات فعال کانال‌ها (ذخیره ابری و محلی)
+  channels: JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]"),
+  activeChannelId: "",
   
   // سهمیه‌های روزانه
   quotas: {
-    imagesUsed: 3,
+    imagesUsed: 0,
     imagesLimit: 10,
-    videoSecUsed: 15,
+    videoSecUsed: 0,
     videoSecLimit: 60,
-    postsCountToday: 24
+    postsCountToday: 0
   },
 
   // سفارشات ربات فروش در صف تایید سوپر ادمین
-  pendingOrders: [
-    {
-      id: "ORD-9481",
-      customerName: "مهندس رضایی (صرافی آروان)",
-      platform: "تلگرام",
-      planId: "pro",
-      amount: "۸,۰۰۰,۰۰۰",
-      status: "pending",
-      receiptNote: "واریز به کارت سامان - فیش #884129"
-    },
-    {
-      id: "ORD-9482",
-      customerName: "خانم دکتر کریمی (مجله سلامت)",
-      platform: "بله",
-      planId: "advanced",
-      amount: "۴,۵۰۰,۰۰۰",
-      status: "pending",
-      receiptNote: "درگاه پرداخت زیبال"
-    }
-  ],
+  pendingOrders: JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]"),
 
-  // لیست مشتریان در پنل سوپر ادمین
-  clients: [
-    {
-      fullName: "علیرضا نادری",
-      username: "naderi_trade",
-      planId: "pro",
-      channelsCount: 6,
-      subEnd: "۱۴۰۳/۱۰/۱۵ (۲۴ روز باقیمانده)",
-      isActive: true
-    },
-    {
-      fullName: "صنایع چوبی آریا",
-      username: "arya_wood",
-      planId: "advanced",
-      channelsCount: 3,
-      subEnd: "۱۴۰۳/۰۹/۲۹ (۸ روز باقیمانده)",
-      isActive: true
-    },
-    {
-      fullName: "پخش عمده پوشاک کیهان",
-      username: "keyhan_wear",
-      planId: "basic",
-      channelsCount: 2,
-      subEnd: "۱۴۰۳/۰۹/۲۴ (۳ روز باقیمانده)",
-      isActive: true
-    }
-  ],
+  // لیست مشترکین و مشتریان فعال
+  clients: JSON.parse(localStorage.getItem("AVEXRAD_CLIENTS") || "[]"),
 
   // لاگ‌های زنده
   liveLogs: [
-    { time: "۱۴:۳۲:۱۰", text: "پست تحلیلی نرخ طلا با موفقیت در کانال @AvexRad_Market منتشر شد.", type: "success" },
-    { time: "۱۴:۱۵:۰۰", text: "استعلام نرخ زنده ارزها از ۳ منبع وب انجام شد (تغییرات: +۰.۴٪).", type: "info" },
-    { time: "۱۳:۵۰:۴۵", text: "تست سلامت ربات کانال پوشاک در بله با موفقیت انجام شد.", type: "success" },
-    { time: "۱۳:۰۰:۲۲", text: "کلید رسانه برای کانال بله به حالت «متوقف در امروز» تغییر کرد.", type: "warning" }
+    { time: "۰۰:۰۰:۰۱", text: "سامانه هوشمند اَوِکس‌راد راه‌اندازی شد و آماده اتصال به کانال‌ها است.", type: "success" }
   ]
 };
 
 // ==============================================================================
 // ۲. مدیریت احراز هویت و ورود یکپارچه (Unified Gatekeeper Auth)
 // ==============================================================================
-const DEMO_CLIENT_ACCOUNTS = [
-  { username: "user_basic", password: "123", fullName: "فروشگاه لوازم خانگی سبلان", planId: "basic", channelsCount: 2 },
-  { username: "user_advanced", password: "123", fullName: "کلینیک تخصصی دکتر مرادی", planId: "advanced", channelsCount: 4 },
-  { username: "user_pro", password: "123", fullName: "صرافی ارز دیجیتال آروان", planId: "pro", channelsCount: 7 }
-];
+const REGISTERED_CLIENT_ACCOUNTS = JSON.parse(localStorage.getItem("AVEXRAD_REGISTERED_CLIENTS") || "[]");
 
 document.addEventListener("DOMContentLoaded", function() {
   initAuth();
@@ -221,8 +113,8 @@ function handleLoginSubmit(event) {
     }
   }
 
-  // ۲. بررسی حساب‌های مشتریان
-  const matchedClient = DEMO_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase() && c.password === password);
+  // ۲. بررسی حساب‌های مشتریان ثبت‌شده
+  const matchedClient = REGISTERED_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase() && c.password === password);
   if (matchedClient) {
     const clientUser = {
       username: matchedClient.username,
@@ -237,12 +129,6 @@ function handleLoginSubmit(event) {
   // اگر اشتباه بود
   errMsg.textContent = "نام کاربری یا رمز عبور اشتباه است.";
   errBox.classList.remove("hidden");
-}
-
-function quickFillLogin(username, password) {
-  document.getElementById("loginUsernameInput").value = username;
-  document.getElementById("loginPasswordInput").value = password;
-  document.getElementById("loginForm").dispatchEvent(new Event("submit"));
 }
 
 function togglePasswordVisibility(inputId) {
@@ -424,6 +310,14 @@ function renderChannelButtons() {
     }
   }
 
+  if (AppState.channels.length === 0) {
+    const emptyNotice = document.createElement("div");
+    emptyNotice.className = "text-xs text-slate-400 p-2";
+    emptyNotice.textContent = "هنوز کانالی اضافه نشده است. برای اتصال اولین کانال (تلگرام، بله، ایتا، روبیکا) روی دکمه «افزودن کانال جدید» کلیک کنید.";
+    container.appendChild(emptyNotice);
+    return;
+  }
+
   // دکمه مشاهده تجمیعی همه کانال‌ها
   const allBtn = document.createElement("button");
   const isAll = (AppState.activeChannelId === "all");
@@ -466,9 +360,17 @@ function selectChannel(channelId) {
 }
 
 function renderActiveChannelDetails() {
-  const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
   const container = document.getElementById("activeChannelDetails");
   if (!container) return;
+
+  if (AppState.channels.length === 0) {
+    document.getElementById("activeChannelTitle").textContent = "هنوز کانالی متصل نشده است";
+    document.getElementById("activeChannelTarget").textContent = "جهت شروع، روی «افزودن کانال جدید» کلیک کنید";
+    document.getElementById("activeChannelPlatformIcon").textContent = "--";
+    return;
+  }
+
+  const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
 
   if (AppState.activeChannelId === "all") {
     // حالت تجمیعی
@@ -813,6 +715,11 @@ function renderOrdersTable() {
   if (!tbody) return;
   tbody.innerHTML = "";
 
+  if (AppState.pendingOrders.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">هنوز سفارشی ثبت نشده است. سفارشات و فیش‌های ارسالی کاربران از ربات @avexrad_sales_bot به صورت زنده در این جدول نمایش داده می‌شوند.</td></tr>`;
+    return;
+  }
+
   AppState.pendingOrders.forEach(ord => {
     const tr = document.createElement("tr");
     tr.className = "hover:bg-amber-500/5 transition";
@@ -853,6 +760,11 @@ function renderClientsTable() {
   const tbody = document.getElementById("clientsTableBody");
   if (!tbody) return;
   tbody.innerHTML = "";
+
+  if (AppState.clients.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">هنوز مشتری فعالی ثبت نشده است. با تایید اولین سفارش یا زدن دکمه «افزودن مشترک جدید»، حساب مشتری ساخته می‌شود.</td></tr>`;
+    return;
+  }
 
   AppState.clients.forEach(c => {
     const tr = document.createElement("tr");
