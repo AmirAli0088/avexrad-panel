@@ -103,8 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
   renderOrdersTable();
   renderClientsTable();
   renderScheduledPostsTable();
-
-// نمای پیش‌نمایش نقش‌های تستی حذف گردید (هر کاربر بر اساس نقش واقعی وارد می‌شود)
+  checkChannelGatekeeper();
 });
 
 function initAuth() {
@@ -293,7 +292,7 @@ function initUI() {
 }
 
 function switchTab(tabId) {
-  const tabs = ["tabChannels", "tabStudio", "tabScheduler", "tabAnalytics", "tabAdminOrders"];
+  const tabs = ["tabChannels", "tabStudio", "tabScheduler", "tabAnalytics", "tabHelp", "tabAdminOrders"];
   tabs.forEach(t => {
     const el = document.getElementById(t);
     const navBtn = document.getElementById("nav" + t.charAt(0).toUpperCase() + t.slice(1));
@@ -306,9 +305,9 @@ function switchTab(tabId) {
     }
     if (navBtn) {
       if (t === tabId) {
-        navBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
+        navBtn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
       } else {
-        navBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800";
+        navBtn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800";
       }
     }
   });
@@ -326,24 +325,27 @@ function applyPlanRole(planId) {
   const badge = document.getElementById("planBadge");
 
   if (isSuper) {
-    banner.classList.remove("hidden");
+    if (banner) banner.classList.remove("hidden");
     if (navAdmin) navAdmin.classList.remove("hidden");
     badge.textContent = "مدیریت ارشد اَوِکس‌راد (VIP)";
     badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-black border border-purple-400 shadow-md shadow-purple-500/30";
   } else {
-    banner.classList.add("hidden");
+    if (banner) banner.classList.add("hidden");
     if (navAdmin) navAdmin.classList.add("hidden");
     badge.textContent = AppState.currentPlan.name;
     badge.className = `text-xs px-2 py-0.5 rounded-full ${AppState.currentPlan.badgeColor} font-semibold`;
   }
 
-  // اعمال دقیق دسترسی تب‌های مجاز برای هر پلن (حذف استودیو AI در پلن پایه)
-  const allowedTabs = AppState.currentPlan.allowedNavTabs || ["tabChannels"];
+  // اعمال دقیق دسترسی تب‌های مجاز برای هر پلن (تب راهنما همیشه برای همه باز است)
+  const allowedTabs = [...(AppState.currentPlan.allowedNavTabs || ["tabChannels"])];
+  if (!allowedTabs.includes("tabHelp")) allowedTabs.push("tabHelp");
+
   const allTabs = [
     { id: "tabChannels", nav: "navTabChannels" },
     { id: "tabStudio", nav: "navTabStudio" },
     { id: "tabScheduler", nav: "navTabScheduler" },
     { id: "tabAnalytics", nav: "navTabAnalytics" },
+    { id: "tabHelp", nav: "navTabHelp" },
     { id: "tabAdminOrders", nav: "navTabAdminOrders" }
   ];
 
@@ -370,6 +372,7 @@ function applyPlanRole(planId) {
 
   updateQuotaDisplays();
   renderChannelButtons();
+  checkChannelGatekeeper();
 }
 
 function updateQuotaDisplays() {
@@ -538,11 +541,198 @@ function toggleMediaOverride(checkbox) {
 
 // کلید مستر خلبان خودکار
 function toggleMasterAutopilot(checkbox) {
+  if (!AppState.channels || AppState.channels.length === 0) {
+    checkbox.checked = false;
+    alert("⚠️ جهت فعال‌سازی خلبان خودکار، ابتدا باید حداقل یک کانال ارتباطی اضافه نمایید.");
+    return;
+  }
+
   const isActive = checkbox.checked;
   const statusMsg = isActive 
-    ? "خلبان خودکار روشن شد: ربات در حالت تولید و انتشار ۱۰۰٪ مستقل قرار گرفت." 
+    ? "خلبان خودکار روشن شد: تولید محتوا و انتشار در ساعات مقرر (۰۹:۰۰، ۱۴:۰۰، ۱۸:۰۰، ۲۲:۰۰) به صورت ۱۰۰٪ مستقل انجام می‌شود." 
     : "خلبان خودکار خاموش شد: انتشار پست‌ها نیازمند تایید دستی در صف انتظار است.";
   addLiveLog(statusMsg, isActive ? "success" : "info");
+  updateAutopilotAndCountdownState();
+}
+
+let countdownInterval = null;
+
+function updateAutopilotAndCountdownState() {
+  const toggle = document.getElementById("masterAutopilotToggle");
+  const countdownEl = document.getElementById("nextPostCountdown");
+  const hasChannels = AppState.channels && AppState.channels.length > 0;
+
+  if (!hasChannels) {
+    if (toggle) {
+      toggle.checked = false;
+      toggle.disabled = true;
+    }
+    if (countdownEl) {
+      countdownEl.textContent = "غیرفعال (نیاز به اتصال کانال)";
+      countdownEl.className = "font-bold text-slate-500 text-xs";
+    }
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
+
+  // کانال متصل است
+  if (toggle) toggle.disabled = false;
+
+  const isAutopilotOn = toggle ? toggle.checked : false;
+
+  if (!isAutopilotOn) {
+    if (countdownEl) {
+      countdownEl.textContent = "خلبان خودکار خاموش است";
+      countdownEl.className = "font-bold text-amber-400 text-xs";
+    }
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
+
+  // خلبان خودکار روشن است
+  startCountdownTicker();
+}
+
+function startCountdownTicker() {
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  function tick() {
+    const countdownEl = document.getElementById("nextPostCountdown");
+    if (!countdownEl) return;
+
+    const now = new Date();
+    // اسلات‌های انتشار روزانه محتوا: ۹:۰۰، ۱۴:۰۰، ۱۸:۰۰، ۲۲:۰۰
+    const slots = [9, 14, 18, 22];
+    let nextSlotDate = null;
+
+    for (let slotHour of slots) {
+      const slotTime = new Date();
+      slotTime.setHours(slotHour, 0, 0, 0);
+      if (slotTime > now) {
+        nextSlotDate = slotTime;
+        break;
+      }
+    }
+
+    if (!nextSlotDate) {
+      // بعد از ۲۲:۰۰ است، اسلات بعدی فردا ۹ صبح است
+      nextSlotDate = new Date();
+      nextSlotDate.setDate(nextSlotDate.getDate() + 1);
+      nextSlotDate.setHours(9, 0, 0, 0);
+    }
+
+    const diffMs = nextSlotDate - now;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    const pad = (n) => String(n).padStart(2, "0");
+    const formatted = (diffHours > 0 ? `${pad(diffHours)}:` : "") + `${pad(diffMins)}:${pad(diffSecs)}`;
+
+    countdownEl.textContent = formatted.replace(/[0-9]/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]) + " تا اسلات بعدی";
+    countdownEl.className = "font-bold text-cyan-300 persian-nums text-xs";
+  }
+
+  tick();
+  countdownInterval = setInterval(tick, 1000);
+}
+
+function checkChannelGatekeeper() {
+  const hasChannels = AppState.channels && AppState.channels.length > 0;
+
+  // نشان‌های قفل بالای تب‌ها
+  const lockStudio = document.getElementById("lockBadgeStudio");
+  const lockScheduler = document.getElementById("lockBadgeScheduler");
+  const lockAnalytics = document.getElementById("lockBadgeAnalytics");
+
+  // نشان‌های قفل منوی کشویی موبایل
+  const drawerLockStudio = document.getElementById("drawerLockStudio");
+  const drawerLockScheduler = document.getElementById("drawerLockScheduler");
+  const drawerLockAnalytics = document.getElementById("drawerLockAnalytics");
+
+  // اورلی‌های قفل داخل تب‌ها
+  const overlayStudio = document.getElementById("gatekeeperLockStudio");
+  const overlayScheduler = document.getElementById("gatekeeperLockScheduler");
+  const overlayAnalytics = document.getElementById("gatekeeperLockAnalytics");
+
+  if (hasChannels) {
+    if (lockStudio) lockStudio.classList.add("hidden");
+    if (lockScheduler) lockScheduler.classList.add("hidden");
+    if (lockAnalytics) lockAnalytics.classList.add("hidden");
+
+    if (drawerLockStudio) drawerLockStudio.classList.add("hidden");
+    if (drawerLockScheduler) drawerLockScheduler.classList.add("hidden");
+    if (drawerLockAnalytics) drawerLockAnalytics.classList.add("hidden");
+
+    if (overlayStudio) overlayStudio.classList.add("hidden");
+    if (overlayScheduler) overlayScheduler.classList.add("hidden");
+    if (overlayAnalytics) overlayAnalytics.classList.add("hidden");
+  } else {
+    if (lockStudio) lockStudio.classList.remove("hidden");
+    if (lockScheduler) lockScheduler.classList.remove("hidden");
+    if (lockAnalytics) lockAnalytics.classList.remove("hidden");
+
+    if (drawerLockStudio) drawerLockStudio.classList.remove("hidden");
+    if (drawerLockScheduler) drawerLockScheduler.classList.remove("hidden");
+    if (drawerLockAnalytics) drawerLockAnalytics.classList.remove("hidden");
+
+    if (overlayStudio) overlayStudio.classList.remove("hidden");
+    if (overlayScheduler) overlayScheduler.classList.remove("hidden");
+    if (overlayAnalytics) overlayAnalytics.classList.remove("hidden");
+  }
+
+  updateAutopilotAndCountdownState();
+}
+
+function openMobileDrawer() {
+  const drawer = document.getElementById("mobileDrawer");
+  const backdrop = document.getElementById("drawerBackdrop");
+  if (!drawer || !backdrop) return;
+
+  drawer.classList.remove("hidden");
+  backdrop.classList.remove("hidden");
+
+  // انیمیشن نرم ورود
+  setTimeout(() => {
+    drawer.classList.add("open");
+    backdrop.classList.add("open");
+  }, 10);
+
+  // به‌روزرسانی بخش سوپر ادمین داخل منوی کشویی
+  const isSuper = (AppState.user && AppState.user.planId === "super_admin");
+  const drawerAdminBtn = document.getElementById("drawerTabAdmin");
+  if (drawerAdminBtn) {
+    if (isSuper) {
+      drawerAdminBtn.classList.remove("hidden");
+      const pCount = AppState.pendingOrders ? AppState.pendingOrders.filter(o => o.status === "pending").length : 0;
+      const badge = document.getElementById("drawerOrdersBadge");
+      if (badge) badge.textContent = pCount.toLocaleString("fa-IR");
+    } else {
+      drawerAdminBtn.classList.add("hidden");
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeMobileDrawer() {
+  const drawer = document.getElementById("mobileDrawer");
+  const backdrop = document.getElementById("drawerBackdrop");
+  if (!drawer || !backdrop) return;
+
+  drawer.classList.remove("open");
+  backdrop.classList.remove("open");
+
+  setTimeout(() => {
+    drawer.classList.add("hidden");
+    backdrop.classList.add("hidden");
+  }, 300);
 }
 
 function saveCurrentChannelSettings() {
@@ -551,6 +741,7 @@ function saveCurrentChannelSettings() {
     ch.aiPersona = document.getElementById("channelAiPersona").value;
     ch.signature = document.getElementById("channelSignature").value;
     ch.forbiddenWords = document.getElementById("channelForbiddenWords").value;
+    localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
     addLiveLog(`تنظیمات لحن و امضای کانال ${ch.name} با موفقیت ذخیره شد.`, "success");
     alert("تنظیمات با موفقیت در سیستم اعمال گردید.");
   }
@@ -566,9 +757,12 @@ function deleteCurrentChannel() {
 
   if (confirm(`آیا از حذف اتصال کانال «${ch.name}» (${ch.platform}) اطمینان دارید؟ سهمیه آن بلافاصله آزاد خواهد شد.`)) {
     AppState.channels = AppState.channels.filter(c => c.id !== ch.id);
-    AppState.activeChannelId = AppState.channels.length > 0 ? AppState.channels[0].id : "all";
+    AppState.activeChannelId = AppState.channels.length > 0 ? AppState.channels[0].id : null;
+    localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
     renderChannelButtons();
     renderActiveChannelDetails();
+    checkChannelGatekeeper();
+    updateRealKpiDisplays();
     addLiveLog(`اتصال کانال «${ch.name}» (${ch.platform}) حذف و ۱ سهمیه آزاد شد.`, "warning");
     alert("اتصال کانال با موفقیت حذف گردید و سهمیه شما آزاد شد.");
   }
@@ -580,15 +774,17 @@ function deleteCurrentChannel() {
 let selectedModalPlatform = "telegram";
 
 function openAddChannelModal() {
-  const maxChannels = AppState.currentPlan.maxChannels;
-  if (AppState.channels.length >= maxChannels && AppState.user.planId !== "super_admin") {
-    alert(`شما به حداکثر سقف کانال‌های پلن خود (${maxChannels} کانال) رسیده‌اید. برای اتصال بیشتر، پلن را به «پیشرفته» یا «حرفه‌ای» ارتقا دهید.`);
+  const isSuper = (AppState.user && AppState.user.planId === "super_admin");
+  const maxChannels = isSuper ? 9999 : AppState.currentPlan.maxChannels;
+  if (!isSuper && AppState.channels.length >= maxChannels) {
+    alert(`شما به حداکثر سقف مجاز کانال‌های متصل در این پلن (${maxChannels} پلتفرم) رسیده‌اید. برای افزودن کانال بیشتر، پلن خود را ارتقا دهید یا یک کانال فعلی را حذف نمایید.`);
     return;
   }
   document.getElementById("modalChannelName").value = "";
   document.getElementById("modalBotToken").value = "";
   document.getElementById("modalChannelTarget").value = "";
   document.getElementById("healthCheckResultBox").classList.add("hidden");
+  selectModalPlatform("telegram");
   openModal("channelModal");
 }
 
@@ -596,12 +792,53 @@ function selectModalPlatform(plat) {
   selectedModalPlatform = plat;
   ["telegram", "bale", "rubika", "eitaa"].forEach(p => {
     const btn = document.getElementById("platformBtn_" + p);
-    if (p === plat) {
-      btn.className = "py-2 rounded-xl text-xs font-bold border border-cyan-400 bg-cyan-500/20 text-cyan-300 flex items-center justify-center gap-1.5";
-    } else {
-      btn.className = "py-2 rounded-xl text-xs font-bold border border-white/10 bg-slate-900 text-slate-400 flex items-center justify-center gap-1.5";
+    if (btn) {
+      if (p === plat) {
+        btn.className = "py-2 rounded-xl text-xs font-bold border border-cyan-400 bg-cyan-500/20 text-cyan-300 flex items-center justify-center gap-1.5";
+      } else {
+        btn.className = "py-2 rounded-xl text-xs font-bold border border-white/10 bg-slate-900 text-slate-400 flex items-center justify-center gap-1.5";
+      }
     }
   });
+
+  const guidanceTitle = document.getElementById("modalGuidanceTitle");
+  const guidanceText = document.getElementById("modalGuidanceText");
+  const tokenLabel = document.getElementById("modalBotTokenLabel");
+  const tokenInput = document.getElementById("modalBotToken");
+  const targetLabel = document.getElementById("modalChannelTargetLabel");
+  const targetInput = document.getElementById("modalChannelTarget");
+
+  if (plat === "telegram") {
+    if (guidanceTitle) guidanceTitle.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5 text-cyan-400"></i><span>راهنمای اتصال تلگرام:</span>`;
+    if (guidanceText) guidanceText.textContent = "توکن ربات را از @BotFather دریافت کرده و ربات را در کانال ادمین با دسترسی ارسال پیام (Post Messages) کنید.";
+    if (tokenLabel) tokenLabel.innerHTML = `<span>توکن ربات تلگرام (BotFather Token):</span><span class="text-[11px] text-cyan-400">ذخیره با رمزنگاری ابری</span>`;
+    if (tokenInput) tokenInput.placeholder = "123456789:AAFg8...";
+    if (targetLabel) targetLabel.textContent = "آیدی عددی یا یوزرنیم کانال تلگرام:";
+    if (targetInput) targetInput.placeholder = "@YourChannelName یا 100123456789-";
+  } else if (plat === "bale") {
+    if (guidanceTitle) guidanceTitle.innerHTML = `<i data-lucide="message-circle" class="w-3.5 h-3.5 text-emerald-400"></i><span>راهنمای اتصال بله (Bale):</span>`;
+    if (guidanceText) guidanceText.textContent = "در پیام‌رسان بله به بازوی BotFather@ مراجعه کرده و توکن بازو را دریافت کنید. سپس بازو را به عنوان مدیر در کانال اضافه کنید.";
+    if (tokenLabel) tokenLabel.innerHTML = `<span>توکن بازوی بله (Bale Bot Token):</span><span class="text-[11px] text-emerald-400">ذخیره با رمزنگاری ابری</span>`;
+    if (tokenInput) tokenInput.placeholder = "123456789:AbCdEf...";
+    if (targetLabel) targetLabel.textContent = "شناسه یا یوزرنیم کانال در بله:";
+    if (targetInput) targetInput.placeholder = "@channel_name یا شناسه عددی";
+  } else if (plat === "rubika") {
+    if (guidanceTitle) guidanceTitle.innerHTML = `<i data-lucide="layers" class="w-3.5 h-3.5 text-purple-400"></i><span>راهنمای اتصال روبیکا:</span>`;
+    if (guidanceText) guidanceText.textContent = "از سامانه BotPlatform روبیکا کلید وب‌سرویس را دریافت کنید و شناسه کانال را متصل نمایید.";
+    if (tokenLabel) tokenLabel.innerHTML = `<span>کلید وب‌سرویس روبیکا (BotPlatform Auth Key):</span><span class="text-[11px] text-purple-400">ذخیره با رمزنگاری ابری</span>`;
+    if (tokenInput) tokenInput.placeholder = "auth_key_rubika_platform...";
+    if (targetLabel) targetLabel.textContent = "شناسه یا لینک کانال روبیکا (Channel GUID / Link):";
+    if (targetInput) targetInput.placeholder = "c0... یا لینک کانال";
+  } else if (plat === "eitaa") {
+    if (guidanceTitle) guidanceTitle.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i><span>نکته فنی ویژه پیام‌رسان ایتا:</span>`;
+    if (guidanceText) guidanceText.textContent = "ایتا ربات‌ساز عمومی ندارد. بنابراین برای ارسال خودکار، باید از وب‌سرویس ایتا‌یار (eitaayar.com) استفاده شود. توکن وب‌سرویس ایتا‌یار را اینجا وارد کنید.";
+    if (tokenLabel) tokenLabel.innerHTML = `<span>توکن وب‌سرویس ایتا‌یار (Eitaayar API Token):</span><span class="text-[11px] text-amber-400">ذخیره با رمزنگاری ابری</span>`;
+    if (tokenInput) tokenInput.placeholder = "eitaayar_token_...";
+    if (targetLabel) targetLabel.textContent = "شناسه کانال در ایتا (شناسه عددی یا نام کاربری):";
+    if (targetInput) targetInput.placeholder = "channel_id یا @username";
+  }
+
+  if (window.lucide) lucide.createIcons();
 }
 
 // اجرای تست سلامت خودکار (با قابلیت تست زنده واقعی و تست شبیه‌سازی دقیق)
@@ -735,8 +972,11 @@ function submitSaveChannel() {
 
   AppState.channels.push(newChannel);
   AppState.activeChannelId = newChannel.id;
+  localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
   renderChannelButtons();
   renderActiveChannelDetails();
+  checkChannelGatekeeper();
+  updateRealKpiDisplays();
   closeModal("channelModal");
   addLiveLog(`کانال جدید «${name}» با موفقیت به سامانه متصل شد.`, "success");
   alert("کانال با موفقیت افزوده شد!");
@@ -1076,21 +1316,127 @@ function openSupportModal() {
     "تلفن مدیران ارشد: امیرعلی عبدالعظیمی & امیرمهدی افضلی");
 }
 
+let isProfilePasswordVisible = false;
+
+function toggleProfilePasswordVisibility() {
+  const passEl = document.getElementById("profilePasswordDisplay");
+  const iconEl = document.getElementById("profilePasswordEyeIcon");
+  if (!passEl) return;
+
+  const currentUsername = (AppState.user && AppState.user.username) || "AmirAli_AvexRad";
+  const realPass = AppState.adminPasswords[currentUsername] || (AppState.user && AppState.user.password) || "alipass88";
+
+  isProfilePasswordVisible = !isProfilePasswordVisible;
+
+  if (isProfilePasswordVisible) {
+    passEl.textContent = realPass;
+    passEl.classList.remove("tracking-wider");
+    if (iconEl) iconEl.setAttribute("data-lucide", "eye-off");
+  } else {
+    passEl.textContent = "••••••••";
+    passEl.classList.add("tracking-wider");
+    if (iconEl) iconEl.setAttribute("data-lucide", "eye");
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function copyCurrentPassword() {
+  const currentUsername = (AppState.user && AppState.user.username) || "AmirAli_AvexRad";
+  const realPass = AppState.adminPasswords[currentUsername] || (AppState.user && AppState.user.password) || "alipass88";
+  copyToClipboard(realPass, "رمز عبور با موفقیت کپی شد.");
+}
+
+function copyToClipboard(text, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert(successMsg || "کپی شد!");
+    }).catch(() => {
+      fallbackCopy(text, successMsg);
+    });
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg) {
+  const input = document.createElement("input");
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand("copy");
+  document.body.removeChild(input);
+  alert(successMsg || "کپی شد!");
+}
+
 function openProfileModal() {
-  const currentUsername = AppState.user.username;
-  document.getElementById("profileUsernameDisplay").textContent = currentUsername;
-  const currentPass = AppState.adminPasswords[currentUsername] || "alipass88";
-  document.getElementById("profilePasswordDisplay").textContent = currentPass + " (قابل تغییر)";
-  
+  isProfilePasswordVisible = false;
+  const passEl = document.getElementById("profilePasswordDisplay");
+  if (passEl) {
+    passEl.textContent = "••••••••";
+    passEl.classList.add("tracking-wider");
+  }
+  const iconEl = document.getElementById("profilePasswordEyeIcon");
+  if (iconEl) iconEl.setAttribute("data-lucide", "eye");
+
+  const usernameEl = document.getElementById("profileUsernameDisplay");
+  const currentUsername = (AppState.user && AppState.user.username) || "AmirAli_AvexRad";
+  if (usernameEl) usernameEl.textContent = currentUsername;
+
+  // وضعیت سوئیچ کاربران ادمین
   const btnAli = document.getElementById("btnAdmin_AmirAli");
   const btnMahdi = document.getElementById("btnAdmin_AmirMahdi");
-  if (currentUsername === "AmirAli_AvexRad") {
-    btnAli.className = "py-2 px-2.5 rounded-xl border border-purple-400 bg-purple-500/20 text-purple-300 font-bold text-center";
-    btnMahdi.className = "py-2 px-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-400 font-bold text-center";
-  } else {
-    btnMahdi.className = "py-2 px-2.5 rounded-xl border border-purple-400 bg-purple-500/20 text-purple-300 font-bold text-center";
-    btnAli.className = "py-2 px-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-400 font-bold text-center";
+  const adminSec = document.getElementById("adminUserSwitchSection");
+
+  const isSuper = (AppState.user && AppState.user.planId === "super_admin");
+  if (adminSec) {
+    if (isSuper) {
+      adminSec.classList.remove("hidden");
+      if (btnAli) {
+        btnAli.className = currentUsername === "AmirAli_AvexRad"
+          ? "py-2 px-2.5 rounded-xl border border-purple-400 bg-purple-500/20 text-purple-300 font-bold text-center"
+          : "py-2 px-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-400 font-bold text-center";
+      }
+      if (btnMahdi) {
+        btnMahdi.className = currentUsername === "AmirMahdi_AvexRad"
+          ? "py-2 px-2.5 rounded-xl border border-purple-400 bg-purple-500/20 text-purple-300 font-bold text-center"
+          : "py-2 px-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-400 font-bold text-center";
+      }
+    } else {
+      adminSec.classList.add("hidden");
+    }
   }
+
+  // به‌روزرسانی نوارهای سهمیه در مودال
+  const imgLabel = document.getElementById("profileImageQuotaLabel");
+  const imgBar = document.getElementById("profileImageQuotaBar");
+  const vidLabel = document.getElementById("profileVideoQuotaLabel");
+  const vidBar = document.getElementById("profileVideoQuotaBar");
+  const chLabel = document.getElementById("profileChannelQuotaLabel");
+  const chBar = document.getElementById("profileChannelQuotaBar");
+
+  if (isSuper) {
+    if (imgLabel) imgLabel.textContent = "نامحدود (ادمین ارشد)";
+    if (imgBar) imgBar.style.width = "100%";
+    if (vidLabel) vidLabel.textContent = "نامحدود (ادمین ارشد)";
+    if (vidBar) vidBar.style.width = "100%";
+    if (chLabel) chLabel.textContent = `${AppState.channels.length} کانال (نامحدود)`;
+    if (chBar) chBar.style.width = "100%";
+  } else {
+    const p = AppState.currentPlan || AVEXRAD_PLANS.basic;
+    const imgRem = Math.max(0, p.dailyImageLimit - AppState.quotas.imagesUsed);
+    if (imgLabel) imgLabel.textContent = `${imgRem} از ${p.dailyImageLimit} باقیمانده`;
+    if (imgBar) imgBar.style.width = `${Math.round((imgRem / p.dailyImageLimit) * 100)}%`;
+
+    const vidRem = Math.max(0, p.dailyVideoSecLimit - AppState.quotas.videoSecUsed);
+    if (vidLabel) vidLabel.textContent = `${vidRem} از ${p.dailyVideoSecLimit} ثانیه`;
+    if (vidBar) vidBar.style.width = `${Math.round((vidRem / p.dailyVideoSecLimit) * 100)}%`;
+
+    const chCount = AppState.channels.length;
+    if (chLabel) chLabel.textContent = `${chCount} از ${p.maxChannels} متصل`;
+    if (chBar) chBar.style.width = `${Math.min(100, Math.round((chCount / p.maxChannels) * 100))}%`;
+  }
+
   openModal("profileModal");
 }
 
@@ -1101,22 +1447,6 @@ function switchAdminUser(username) {
   if (headerName) headerName.textContent = username;
   openProfileModal();
   addLiveLog(`ورود مدیر ارشد: ${AppState.user.fullName} (${username})`, "info");
-}
-
-function submitChangeAdminPassword() {
-  const newPass = document.getElementById("newAdminPasswordInput").value.trim();
-  if (!newPass || newPass.length < 6) {
-    alert("رمز عبور باید حداقل ۶ کاراکتر باشد.");
-    return;
-  }
-  const currentUsername = AppState.user.username;
-  AppState.adminPasswords[currentUsername] = newPass;
-  localStorage.setItem("AVEXRAD_ADMIN_PASSWORDS", JSON.stringify(AppState.adminPasswords));
-  document.getElementById("profilePasswordDisplay").textContent = newPass + " (دائمی ذخیره‌شده)";
-  document.getElementById("newAdminPasswordInput").value = "";
-  addLiveLog(`رمز عبور مدیر ارشد (${currentUsername}) با موفقیت به‌روزرسانی شد.`, "success");
-  alert(`رمز عبور جدید برای ${currentUsername} با موفقیت در سیستم ثبت گردید.`);
-  closeModal("profileModal");
 }
 
 // ارتباط با API وب‌اپلیکیشن Google Apps Script (پشتیبانی ۲ جهته: native google.script.run و fetch مستقل)
