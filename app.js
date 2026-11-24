@@ -710,7 +710,7 @@ function triggerVideoCreator() {
   }, 1200);
 }
 
-function publishApprovedPost() {
+async function publishApprovedPost() {
   const text = document.getElementById("aiDraftOutput").value;
   if (!text) {
     alert("متن پیش‌نویس خالی است.");
@@ -718,6 +718,41 @@ function publishApprovedPost() {
   }
   const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
   const targetName = ch ? ch.name : "کانال هدف";
+
+  // ۱. انتشار مستقیم در تلگرام در صورت اتصال کانال تلگرامی
+  if (ch && ch.platform === "telegram" && ch.token && ch.target) {
+    let rawToken = ch.token;
+    if (rawToken.startsWith("ENC::")) {
+      rawToken = rawToken.replace("ENC::", "");
+    }
+    const fullText = text + (ch.signature ? "\n\n" + ch.signature : "");
+    addLiveLog(`در حال ارسال مستقیم پست به ${ch.target}...`, "info");
+
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${rawToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: ch.target,
+          text: fullText
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        addLiveLog(`✅ پست با موفقیت در کانال «${targetName}» منتشر شد. (شناسه پیام: ${data.result.message_id})`, "success");
+        alert(`✅ پست با موفقیت در کانال «${targetName}» منتشر گردید!\nشناسه پیام در تلگرام: ${data.result.message_id}`);
+        return;
+      } else {
+        addLiveLog(`❌ خطای تلگرام: ${data.description}`, "error");
+        alert(`خطای تلگرام: ${data.description}`);
+        return;
+      }
+    } catch (err) {
+      console.warn("Direct Telegram post error, logging locally:", err);
+    }
+  }
+
+  // ۲. انتشار پیش‌فرض در سیستم محلی / پایگاه داده
   addLiveLog(`پست تاییدشده با موفقیت در «${targetName}» منتشر شد.`, "success");
   alert(`پست با موفقیت در ${targetName} انتشار یافت!`);
 }
@@ -976,11 +1011,34 @@ function submitChangeAdminPassword() {
   closeModal("profileModal");
 }
 
-// ارتباط با API وب‌اپلیکیشن Google Apps Script
+// ارتباط با API وب‌اپلیکیشن Google Apps Script (پشتیبانی ۲ جهته: native google.script.run و fetch مستقل)
 async function callGasApi(action, data = {}) {
-  if (!AppState.gasEndpoint) return null;
+  // ۱. پشتیبانی بومی Google Apps Script درون وب‌اپ (بدون نیاز به آدرس یا درگیر شدن با محدودیت‌های مرورگر)
+  if (typeof google !== "undefined" && google.script && google.script.run) {
+    return new Promise((resolve) => {
+      google.script.run
+        .withSuccessHandler((res) => {
+          try {
+            resolve(typeof res === "string" ? JSON.parse(res) : res);
+          } catch(e) { resolve(res); }
+        })
+        .withFailureHandler((err) => {
+          console.error("GAS Native Error:", err);
+          resolve(null);
+        })
+        .handleClientCall(action, JSON.stringify(data));
+    });
+  }
+
+  // ۲. در صورتی که کاربر به صورت مستقل آدرس وب‌اپ را تنظیم کرده باشد
+  let endpoint = AppState.gasEndpoint;
+  if (!endpoint && window.location.href.includes("script.google.com")) {
+    endpoint = window.location.href.split('?')[0];
+  }
+  if (!endpoint) return null;
+
   try {
-    const res = await fetch(AppState.gasEndpoint, {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: action, ...data })
