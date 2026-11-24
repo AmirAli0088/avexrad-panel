@@ -159,16 +159,7 @@
           <span id="subRemainingText" class="font-bold text-amber-300 persian-nums">۲۹ روز تا تمدید</span>
         </div>
 
-        <!-- سوئیچ شبیه‌ساز پلن (برای ادمین) -->
-        <div class="flex items-center gap-1 bg-slate-950/80 px-2 py-1 rounded-lg border border-purple-500/30">
-          <span class="text-[11px] text-slate-400">نمای پلن:</span>
-          <select id="rolePlanSelector" class="bg-slate-900 text-xs text-cyan-300 rounded px-1.5 py-0.5 border-none focus:ring-1 focus:ring-cyan-500">
-            <option value="super_admin" selected>ادمین ارشد (نامحدود)</option>
-            <option value="pro">پلن حرفه‌ای (VIP)</option>
-            <option value="advanced">پلن پیشرفته (محبوب)</option>
-            <option value="basic">پلن پایه (اقتصادی)</option>
-          </select>
-        </div>
+        
 
         <!-- دکمه پشتیبانی ۲۴/۷ VIP -->
         <button onclick="openSupportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold hover:brightness-110 transition shadow-md shadow-amber-500/20">
@@ -211,7 +202,7 @@
       <div class="flex items-center gap-2">
         <button onclick="switchTab('tabAdminOrders')" class="px-3.5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition flex items-center gap-1.5 shadow-lg shadow-amber-500/25">
           <i data-lucide="receipt-text" class="w-4 h-4"></i>
-          <span>تایید سفارش‌های ربات فروش (<span id="pendingOrdersCount" class="persian-nums">۲</span>)</span>
+          <span>تایید سفارش‌های ربات فروش (<span id="pendingOrdersCount" class="persian-nums">۰</span>)</span>
         </button>
         <button onclick="openConfigModal()" class="px-3 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-amber-300 text-xs hover:bg-slate-800 transition flex items-center gap-1.5">
           <i data-lucide="settings" class="w-4 h-4"></i>
@@ -260,10 +251,10 @@
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
           <span class="text-xs text-slate-400">مجموع اعضای کانال‌ها</span>
-          <div class="text-xl md:text-2xl font-black text-white persian-nums" id="kpiTotalMembers">۵</div>
+          <div class="text-xl md:text-2xl font-black text-white persian-nums" id="kpiTotalMembers">۰</div>
           <div class="flex items-center gap-1 text-[11px] text-cyan-400">
             <i data-lucide="radio" class="w-3.5 h-3.5"></i>
-            <span>کانال رسمی AvexGold</span>
+            <span>آماده اتصال کانال</span>
           </div>
         </div>
         <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
@@ -289,10 +280,10 @@
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
           <span class="text-xs text-slate-400">پست‌های ارسالی سامانه</span>
-          <div class="text-xl md:text-2xl font-black text-purple-300 persian-nums" id="kpiTotalAiPosts">۱</div>
+          <div class="text-xl md:text-2xl font-black text-purple-300 persian-nums" id="kpiTotalAiPosts">۰</div>
           <div class="flex items-center gap-1 text-[11px] text-purple-400">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>پست رسمی منتشرشده</span>
+            <span>پست ارسالی</span>
           </div>
         </div>
         <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
@@ -320,28 +311,28 @@
     <!-- ========================================================================= -->
     <!-- ۳. تب‌های ناوبری اصلی پنل                                                  -->
     <!-- ========================================================================= -->
-    <div class="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
-      <button onclick="switchTab('tabChannels')" id="navTabChannels" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+    <div class="flex items-center gap-1.5 sm:gap-2 border-b border-white/10 pb-2 overflow-x-auto no-scrollbar touch-pan-x">
+      <button onclick="switchTab('tabChannels')" id="navTabChannels" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
         <i data-lucide="radio" class="w-4 h-4"></i>
         <span>مدیریت کانال‌ها و ربات</span>
       </button>
 
-      <button onclick="switchTab('tabStudio')" id="navTabStudio" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <button onclick="switchTab('tabStudio')" id="navTabStudio" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="wand-2" class="w-4 h-4"></i>
         <span>استودیو چندرسانه‌ای AI</span>
       </button>
 
-      <button onclick="switchTab('tabScheduler')" id="navTabScheduler" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <button onclick="switchTab('tabScheduler')" id="navTabScheduler" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="calendar-clock" class="w-4 h-4"></i>
         <span>تقویم زمان‌بندی هوشمند</span>
       </button>
 
-      <button onclick="switchTab('tabAnalytics')" id="navTabAnalytics" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+      <button onclick="switchTab('tabAnalytics')" id="navTabAnalytics" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
         <i data-lucide="line-chart" class="w-4 h-4"></i>
         <span>آزمایشگاه آمار و ساخت نمودار</span>
       </button>
 
-      <button onclick="switchTab('tabAdminOrders')" id="navTabAdminOrders" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30">
+      <button onclick="switchTab('tabAdminOrders')" id="navTabAdminOrders" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30">
         <i data-lucide="shield-check" class="w-4 h-4"></i>
         <span>فرماندهی ارشد و سفارشات فروش</span>
       </button>
