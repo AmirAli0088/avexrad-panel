@@ -6,13 +6,21 @@
 // ==============================================================================
 // ۱. وضعیت عمومی سیستم (App State)
 // ==============================================================================
+// پاکسازی کانال‌های تستی قبلی و شروع با صفر کانال (آماده دریافت پروژه‌های جدید)
+let initialChannels = JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]");
+if (initialChannels.some(c => c.id === "chn_avexgold")) {
+  initialChannels = [];
+  localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify([]));
+}
+
+let initialOrders = JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]");
+if (initialOrders.some(o => o.id === "ORD-101" || o.id === "ORD-102")) {
+  initialOrders = [];
+  localStorage.setItem("AVEXRAD_PENDING_ORDERS", JSON.stringify([]));
+}
+
 const AppState = {
-  user: {
-    username: "AmirAli_AvexRad",
-    fullName: "امیرعلی عبدالعظیمی",
-    role: "super_admin",
-    planId: "super_admin"
-  },
+  user: null,
   adminPasswords: JSON.parse(localStorage.getItem("AVEXRAD_ADMIN_PASSWORDS") || JSON.stringify({
     "AmirAli_AvexRad": "alipass88",
     "AmirMahdi_AvexRad": "mahdipass88"
@@ -20,24 +28,9 @@ const AppState = {
   currentPlan: AVEXRAD_PLANS.super_admin,
   gasEndpoint: localStorage.getItem("AVEXRAD_GAS_ENDPOINT") || "https://script.google.com/macros/s/AKfycbxTR0taCH_QU_4gWHrXFW2BuPELd8FqbB68cDxgjGcW7Y7rDAoO289Zdz7Pl3xkU4qr/exec",
   
-  // اتصالات فعال کانال‌ها (کانال اول: پروژه واقعی AvexGold)
-  channels: JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || JSON.stringify([
-    {
-      id: "chn_avexgold",
-      name: "AvexGold | اَوِکس گلد",
-      platform: "telegram",
-      target: "@avexgold",
-      token: "ENC::9229952579:AAHUDRVhf_uFrDKYSf-Vt4YkuxQ0mp051gs",
-      aiPersona: "expert_analytical",
-      signature: "━━━━━━━━━━━━━━━━━━━━\n💎 کانال رسمی اَوِکس گلد | مرجع لحظه‌ای طلا، سکه و ارز\n📌 @avexgold",
-      forbiddenWords: "شایعه, لینک ناشناس, کلاهبرداری",
-      allowImageToday: true,
-      isAutopilot: true,
-      status: "active",
-      membersCount: 5
-    }
-  ])),
-  activeChannelId: "chn_avexgold",
+  // کانال‌های متصل (شروع با صفر کانال - کاملاً آماده دریافت پروژه‌ها)
+  channels: initialChannels,
+  activeChannelId: initialChannels.length > 0 ? initialChannels[0].id : null,
   
   // سهمیه‌های روزانه
   quotas: {
@@ -48,16 +41,15 @@ const AppState = {
     postsCountToday: 0
   },
 
-  // سفارشات ربات فروش در صف تایید سوپر ادمین
-  // سفارشات ربات فروش (شروع با دیتای کاملاً واقعی و صفر)
-  pendingOrders: JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]"),
+  // سفارشات ربات فروش در صف تایید سوپر ادمین (شروع کاملاً صفر و واقعی)
+  pendingOrders: initialOrders,
 
-  // لیست مشتریان فعال و تاییدشده (صفر در شروع پروژه)
+  // لیست مشترکین و مشتریان فعال (شروع کاملاً صفر و واقعی)
   clients: JSON.parse(localStorage.getItem("AVEXRAD_CLIENTS") || "[]"),
 
   // لاگ‌های زنده
   liveLogs: [
-    { time: "۰۰:۰۰:۰۱", text: "سامانه هوشمند اَوِکس‌راد راه‌اندازی شد و آماده اتصال به کانال‌ها است.", type: "success" }
+    { time: "۰۰:۰۰:۰۱", text: "سامانه هوشمند اَوِکس‌راد آماده اتصال به کانال‌ها است.", type: "success" }
   ]
 };
 
@@ -75,10 +67,16 @@ function updateRealKpiDisplays() {
   if (growthEl) growthEl.textContent = "۰ نفر";
 
   const postEl = document.getElementById("kpiTotalAiPosts");
-  if (postEl) postEl.textContent = "۱";
+  if (postEl) postEl.textContent = "۰";
 
   const healthEl = document.getElementById("kpiBotHealth");
   if (healthEl) healthEl.textContent = "۱۰۰٪ آنلاین";
+
+  const countEl = document.getElementById("pendingOrdersCount");
+  if (countEl) {
+    const pendingCount = AppState.pendingOrders.filter(o => o.status === "pending").length;
+    countEl.textContent = pendingCount.toLocaleString("fa-IR");
+  }
 }
 
 // واکشی اطلاعات زنده اتصال به گوگل شیت و گوگل درایو
@@ -108,13 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
   renderClientsTable();
   renderScheduledPostsTable();
 
-  // ثبت لیسنر برای شبیه‌ساز انتخاب پلن
-  const planSelector = document.getElementById("rolePlanSelector");
-  if (planSelector) {
-    planSelector.addEventListener("change", function(e) {
-      applyPlanRole(e.target.value);
-    });
-  }
+// نمای پیش‌نمایش نقش‌های تستی حذف گردید (هر کاربر بر اساس نقش واقعی وارد می‌شود)
 });
 
 function initAuth() {
@@ -279,16 +271,7 @@ function loginSuccess(user, notify = true) {
   applyPlanRole(user.planId);
   updateQuotaDisplays();
 
-  // اگر مشتری است منوی شبیه‌ساز پلن را مخفی کن
-  const planSelectorWrap = document.getElementById("rolePlanSelector") ? document.getElementById("rolePlanSelector").parentElement : null;
-  if (planSelectorWrap) {
-    if (user.role === "super_admin") {
-      planSelectorWrap.classList.remove("hidden");
-      document.getElementById("rolePlanSelector").value = "super_admin";
-    } else {
-      planSelectorWrap.classList.add("hidden");
-    }
-  }
+
 
   if (notify) {
     addLiveLog(`ورود موفق به سامانه: ${user.fullName} (${user.role === 'super_admin' ? 'مدیر ارشد' : 'مشترک ' + user.planId})`, "success");
@@ -874,6 +857,11 @@ async function publishApprovedPost() {
 // ۶. مدیریت سفارشات ربات فروش و مشترکین (Super Admin Panel)
 // ==============================================================================
 function renderOrdersTable() {
+  const countEl = document.getElementById("pendingOrdersCount");
+  if (countEl) {
+    const pendingCount = AppState.pendingOrders.filter(o => o.status === "pending").length;
+    countEl.textContent = pendingCount.toLocaleString("fa-IR");
+  }
   const tbody = document.getElementById("ordersTableBody");
   if (!tbody) return;
   tbody.innerHTML = "";
