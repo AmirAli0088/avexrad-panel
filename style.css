@@ -287,3 +287,61 @@ input:checked + .switch-track-purple .switch-thumb {
   border-radius: 9999px;
   margin-right: 4px;
 }
+
+/* انیمیشن دکمه همبرگری مدرن (Hamburger to X) */
+.hamburger-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 22px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hamburger-line {
+  width: 100%;
+  height: 2px;
+  background-color: #38bdf8;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* انیمیشن جابه‌جایی تب‌ها و صفحات */
+@keyframes fadeInView {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-content-pane {
+  animation: fadeInView 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* کارت بنر دیباگ / مشاهده پنل مشترک */
+.impersonation-bar {
+  background: linear-gradient(90deg, #d97706, #b45309);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+}
