@@ -20,9 +20,24 @@ const AppState = {
   currentPlan: AVEXRAD_PLANS.super_admin,
   gasEndpoint: localStorage.getItem("AVEXRAD_GAS_ENDPOINT") || "",
   
-  // اتصالات فعال کانال‌ها (ذخیره ابری و محلی)
-  channels: JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]"),
-  activeChannelId: "",
+  // اتصالات فعال کانال‌ها (کانال اول: پروژه واقعی AvexGold)
+  channels: JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || JSON.stringify([
+    {
+      id: "chn_avexgold",
+      name: "AvexGold | اَوِکس گلد",
+      platform: "telegram",
+      target: "@avexgold",
+      token: "ENC::9229952579:AAHUDRVhf_uFrDKYSf-Vt4YkuxQ0mp051gs",
+      aiPersona: "expert_analytical",
+      signature: "━━━━━━━━━━━━━━━━━━━━\n💎 کانال رسمی اَوِکس گلد | مرجع لحظه‌ای طلا، سکه و ارز\n📌 @avexgold",
+      forbiddenWords: "شایعه, لینک ناشناس, کلاهبرداری",
+      allowImageToday: true,
+      isAutopilot: true,
+      status: "active",
+      membersCount: 5
+    }
+  ])),
+  activeChannelId: "chn_avexgold",
   
   // سهمیه‌های روزانه
   quotas: {
