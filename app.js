@@ -17,6 +17,77 @@ if (initialOrders.some(o => o.id === "ORD-101" || o.id === "ORD-102")) {
   localStorage.setItem("AVEXRAD_PENDING_ORDERS", JSON.stringify([]));
 }
 
+
+// ==============================================================================
+// کانال‌های پیش‌فرض و رسمی مجموعه اَوِکس‌راد (Official Production Channels)
+// ==============================================================================
+const OFFICIAL_DEFAULT_CHANNELS = [
+  {
+    id: "avexrad-official-telegram",
+    name: "کانال رسمی اَوِکس‌راد (تلگرام)",
+    platform: "telegram",
+    target: "@avexrad_channel",
+    token: "9026405874:AAGtlrjjTfg7BY2bDWag9QR_jF9dRWgQGS4",
+    botUsername: "@avexrad_channel_bot",
+    link: "https://t.me/avexrad_channel",
+    membersCount: 120,
+    status: "active",
+    isOfficial: true,
+    aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
+    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین\n🌐 @avexrad_channel",
+    forbiddenWords: ""
+  },
+  {
+    id: "avexrad-official-bale",
+    name: "کانال رسمی اَوِکس‌راد (بله)",
+    platform: "bale",
+    target: "@avexrad_channel",
+    token: "1444200829:k2lPWCiyhy3FVQ8NTtIfj95nsCBvi5_cPkQ",
+    botUsername: "@avexrad_channel_bot",
+    link: "https://ble.ir/avexrad_channel",
+    membersCount: 85,
+    status: "active",
+    isOfficial: true,
+    aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
+    signature: "🚀 اَوِکس‌راد | سامانه هوشمند مدیریت رسانه\n🌐 ble.ir/avexrad_channel",
+    forbiddenWords: ""
+  },
+  {
+    id: "avexrad-official-eitaa",
+    name: "کانال رسمی اَوِکس‌راد (ایتا)",
+    platform: "eitaa",
+    target: "123075415",
+    token: "bot492011:6f1f3078-ce0f-4524-a418-e142bab4b322",
+    botUsername: "avexrad_channel",
+    link: "https://eitaa.com/avexrad_channel",
+    membersCount: 95,
+    status: "active",
+    isOfficial: true,
+    aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
+    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین\n🌐 eitaa.com/avexrad_channel",
+    forbiddenWords: ""
+  }
+];
+
+function ensureOfficialChannelsForAdmin() {
+  if (AppState.user && (AppState.user.role === "super_admin" || AppState.user.planId === "super_admin")) {
+    const existingIds = new Set(AppState.channels.map(c => c.id));
+    let modified = false;
+    OFFICIAL_DEFAULT_CHANNELS.forEach(defCh => {
+      if (!existingIds.has(defCh.id)) {
+        AppState.channels.push({ ...defCh });
+        modified = true;
+      }
+    });
+    if (modified) {
+      localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
+    }
+    if (!AppState.activeChannelId && AppState.channels.length > 0) {
+      AppState.activeChannelId = AppState.channels[0].id;
+    }
+  }
+}
+
 const AppState = {
   user: null,
   adminPasswords: JSON.parse(localStorage.getItem("AVEXRAD_ADMIN_PASSWORDS") || JSON.stringify({
@@ -256,6 +327,12 @@ function togglePasswordVisibility(inputId) {
 }
 
 function loginSuccess(user, notify = true) {
+  // بررسی سقف مجاز دستگاه‌ها
+  const isAllowedDevice = checkDeviceLimit(user.username, user.planId);
+  if (!isAllowedDevice) {
+    return;
+  }
+
   AppState.user = user;
   localStorage.setItem("AVEXRAD_AUTH_USER", JSON.stringify(user));
 
@@ -265,10 +342,14 @@ function loginSuccess(user, notify = true) {
   const headerUser = document.getElementById("headerAdminUsername");
   if (headerUser) headerUser.textContent = user.fullName || user.username;
 
+  // مقداردهی کانال‌های رسمی برای ادمین
+  ensureOfficialChannelsForAdmin();
+
   applyPlanRole(user.planId);
   updateQuotaDisplays();
-
-
+  updateRealKpiDisplays();
+  renderChannelButtons();
+  switchTab("tabDashboard");
 
   if (notify) {
     addLiveLog(`ورود موفق به سامانه: ${user.fullName} (${user.role === 'super_admin' ? 'مدیر ارشد' : 'مشترک ' + user.planId})`, "success");
@@ -278,11 +359,16 @@ function loginSuccess(user, notify = true) {
 }
 
 function handleLogout() {
+  if (AppState.isImpersonating) {
+    stopImpersonating();
+    return;
+  }
   localStorage.removeItem("AVEXRAD_AUTH_USER");
+  AppState.user = null;
+  document.getElementById("dashboardAppView").classList.add("hidden");
+  document.getElementById("loginScreenView").classList.remove("hidden");
   document.getElementById("loginUsernameInput").value = "";
   document.getElementById("loginPasswordInput").value = "";
-  document.getElementById("loginErrorBox").classList.add("hidden");
-  showLoginScreen();
   addLiveLog("خروج امن از حساب کاربری انجام شد.", "info");
 }
 
@@ -291,11 +377,22 @@ function initUI() {
   updateQuotaDisplays();
 }
 
+const VIEW_TITLES = {
+  tabDashboard: "صفحه اصلی و داشبورد",
+  tabChannels: "مدیریت کانال‌ها و ربات‌ها",
+  tabStudio: "استودیو هوش مصنوعی",
+  tabScheduler: "تقویم زمان‌بندی",
+  tabAnalytics: "آمار و گزارشات",
+  tabHelp: "راهنما و آموزش",
+  tabAdminOrders: "فرماندهی ارشد و سفارشات"
+};
+
 function switchTab(tabId) {
-  const tabs = ["tabChannels", "tabStudio", "tabScheduler", "tabAnalytics", "tabHelp", "tabAdminOrders"];
+  const tabs = ["tabDashboard", "tabChannels", "tabStudio", "tabScheduler", "tabAnalytics", "tabHelp", "tabAdminOrders"];
   tabs.forEach(t => {
     const el = document.getElementById(t);
     const navBtn = document.getElementById("nav" + t.charAt(0).toUpperCase() + t.slice(1));
+    const drawerBtn = document.getElementById("drawer" + t.charAt(0).toUpperCase() + t.slice(1));
     if (el) {
       if (t === tabId) {
         el.classList.remove("hidden");
@@ -305,12 +402,25 @@ function switchTab(tabId) {
     }
     if (navBtn) {
       if (t === tabId) {
-        navBtn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
+        navBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20";
       } else {
-        navBtn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800";
+        navBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800";
+      }
+    }
+    if (drawerBtn) {
+      if (t === tabId) {
+        drawerBtn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition";
+      } else {
+        drawerBtn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 text-xs font-medium transition";
       }
     }
   });
+
+  const breadcrumb = document.getElementById("currentViewBreadcrumb");
+  if (breadcrumb) {
+    breadcrumb.textContent = "| " + (VIEW_TITLES[tabId] || "");
+  }
+
   if (window.lucide) lucide.createIcons();
 }
 
@@ -322,52 +432,72 @@ function applyPlanRole(planId) {
   const isSuper = (planId === "super_admin");
   const banner = document.getElementById("superAdminBanner");
   const navAdmin = document.getElementById("navTabAdminOrders");
+  const drawerAdmin = document.getElementById("drawerTabAdminOrders");
   const badge = document.getElementById("planBadge");
 
   if (isSuper) {
     if (banner) banner.classList.remove("hidden");
     if (navAdmin) navAdmin.classList.remove("hidden");
-    badge.textContent = "مدیریت ارشد اَوِکس‌راد (VIP)";
-    badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-black border border-purple-400 shadow-md shadow-purple-500/30";
+    if (drawerAdmin) drawerAdmin.classList.remove("hidden");
+    if (badge) {
+      badge.textContent = "مدیریت ارشد اَوِکس‌راد (VIP)";
+      badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-black border border-purple-400 shadow-md shadow-purple-500/30";
+    }
   } else {
     if (banner) banner.classList.add("hidden");
     if (navAdmin) navAdmin.classList.add("hidden");
-    badge.textContent = AppState.currentPlan.name;
-    badge.className = `text-xs px-2 py-0.5 rounded-full ${AppState.currentPlan.badgeColor} font-semibold`;
+    if (drawerAdmin) drawerAdmin.classList.add("hidden");
+    if (badge) {
+      badge.textContent = AppState.currentPlan.name;
+      badge.className = `text-xs px-2 py-0.5 rounded-full ${AppState.currentPlan.badgeColor} font-semibold`;
+    }
   }
 
-  // اعمال دقیق دسترسی تب‌های مجاز برای هر پلن (تب راهنما همیشه برای همه باز است)
-  const allowedTabs = [...(AppState.currentPlan.allowedNavTabs || ["tabChannels"])];
+  // تب‌های مجاز برای هر پلن (داشبورد و راهنما همیشه برای همه باز است)
+  const allowedTabs = ["tabDashboard", ...(AppState.currentPlan.allowedNavTabs || ["tabChannels"])];
   if (!allowedTabs.includes("tabHelp")) allowedTabs.push("tabHelp");
 
   const allTabs = [
-    { id: "tabChannels", nav: "navTabChannels" },
-    { id: "tabStudio", nav: "navTabStudio" },
-    { id: "tabScheduler", nav: "navTabScheduler" },
-    { id: "tabAnalytics", nav: "navTabAnalytics" },
-    { id: "tabHelp", nav: "navTabHelp" },
-    { id: "tabAdminOrders", nav: "navTabAdminOrders" }
+    { id: "tabDashboard", nav: "navTabDashboard", drawer: "drawerTabDashboard" },
+    { id: "tabChannels", nav: "navTabChannels", drawer: "drawerTabChannels" },
+    { id: "tabStudio", nav: "navTabStudio", drawer: "drawerTabStudio" },
+    { id: "tabScheduler", nav: "navTabScheduler", drawer: "drawerTabScheduler" },
+    { id: "tabAnalytics", nav: "navTabAnalytics", drawer: "drawerTabAnalytics" },
+    { id: "tabHelp", nav: "navTabHelp", drawer: "drawerTabHelp" },
+    { id: "tabAdminOrders", nav: "navTabAdminOrders", drawer: "drawerTabAdminOrders" }
   ];
 
   let currentActiveTabVisible = false;
   allTabs.forEach(t => {
     const navBtn = document.getElementById(t.nav);
+    const drawerBtn = document.getElementById(t.drawer);
+    const isAllowed = allowedTabs.includes(t.id);
+
     if (navBtn) {
-      if (allowedTabs.includes(t.id)) {
+      if (isAllowed) {
         navBtn.classList.remove("hidden");
-        const tabEl = document.getElementById(t.id);
-        if (tabEl && !tabEl.classList.contains("hidden")) {
-          currentActiveTabVisible = true;
-        }
       } else {
         navBtn.classList.add("hidden");
       }
     }
+    if (drawerBtn) {
+      if (isAllowed) {
+        drawerBtn.classList.remove("hidden");
+      } else {
+        drawerBtn.classList.add("hidden");
+      }
+    }
+
+    if (isAllowed) {
+      const tabEl = document.getElementById(t.id);
+      if (tabEl && !tabEl.classList.contains("hidden")) {
+        currentActiveTabVisible = true;
+      }
+    }
   });
 
-  // اگر کاربر روی تب غیرمجاز بود به تب اول هدایت شود
   if (!currentActiveTabVisible) {
-    switchTab("tabChannels");
+    switchTab("tabDashboard");
   }
 
   updateQuotaDisplays();
@@ -721,13 +851,35 @@ function openMobileDrawer() {
   if (window.lucide) lucide.createIcons();
 }
 
+function toggleMobileDrawer() {
+  const drawer = document.getElementById("mobileDrawer");
+  const backdrop = document.getElementById("drawerBackdrop");
+  const hamburgerBox = document.getElementById("hamburgerLinesBox");
+  if (!drawer || !backdrop) return;
+
+  const isHidden = drawer.classList.contains("hidden");
+  if (isHidden) {
+    drawer.classList.remove("hidden");
+    backdrop.classList.remove("hidden");
+    setTimeout(() => {
+      drawer.classList.add("open");
+      backdrop.classList.add("open");
+      if (hamburgerBox) hamburgerBox.classList.add("active");
+    }, 10);
+  } else {
+    closeMobileDrawer();
+  }
+}
+
 function closeMobileDrawer() {
   const drawer = document.getElementById("mobileDrawer");
   const backdrop = document.getElementById("drawerBackdrop");
+  const hamburgerBox = document.getElementById("hamburgerLinesBox");
   if (!drawer || !backdrop) return;
 
   drawer.classList.remove("open");
   backdrop.classList.remove("open");
+  if (hamburgerBox) hamburgerBox.classList.remove("active");
 
   setTimeout(() => {
     drawer.classList.add("hidden");
@@ -1145,41 +1297,414 @@ function renderOrdersTable() {
 
 function approveOrder(orderId) {
   const ord = AppState.pendingOrders.find(o => o.id === orderId);
-  if (ord) {
-    ord.status = "approved";
-    renderOrdersTable();
-    addLiveLog(`سفارش ${orderId} مشتری «${ord.customerName}» تایید و پلن او فوراً فعال شد.`, "success");
-    alert(`سفارش ${orderId} با موفقیت تایید و حساب مشتری فعال گردید.`);
+  if (!ord) return;
+
+  ord.status = "approved";
+  localStorage.setItem("AVEXRAD_PENDING_ORDERS", JSON.stringify(AppState.pendingOrders));
+
+  const customerName = ord.customerName || "مشتری جدید";
+  const username = ord.username || ("user_" + Math.random().toString(36).substring(2, 7));
+  const password = generateRandomPassword();
+  const planId = ord.planId || "pro";
+
+  const newClient = {
+    id: "CLI-" + Date.now().toString().slice(-6),
+    fullName: customerName,
+    username: username,
+    password: password,
+    planId: planId,
+    channelsCount: 0,
+    subEnd: "۳۰ روز تا تمدید",
+    deviceLimit: ord.extraDevice ? 3 : 2,
+    activeDevices: 1,
+    status: "active",
+    createdAt: new Date().toISOString()
+  };
+
+  AppState.clients.unshift(newClient);
+  localStorage.setItem("AVEXRAD_CLIENTS", JSON.stringify(AppState.clients));
+
+  REGISTERED_CLIENT_ACCOUNTS.push({
+    username: newClient.username,
+    password: newClient.password,
+    fullName: newClient.fullName,
+    planId: newClient.planId,
+    deviceLimit: newClient.deviceLimit
+  });
+  localStorage.setItem("AVEXRAD_REGISTERED_CLIENTS", JSON.stringify(REGISTERED_CLIENT_ACCOUNTS));
+
+  if (ord.chat_id || ord.telegramChatId) {
+    const chatId = ord.chat_id || ord.telegramChatId;
+    const msg = `🎉 سفارش شما (${orderId}) با موفقیت تایید و حساب شما فعال گردید!
+
+` +
+      `🌐 سامانه اَوِکس‌راد:
+https://amirali0088.github.io/avexrad-panel/
+
+` +
+      `👤 نام کاربری: ${username}
+` +
+      `🔑 رمز عبور: ${password}
+` +
+      `✨ سطح پلن: ${planId.toUpperCase()}
+
+` +
+      `تیم اَوِکس‌راد همراه همیشگی شماست.`;
+    
+    fetch("https://api.telegram.org/bot9026405874:AAGtlrjjTfg7BY2bDWag9QR_jF9dRWgQGS4/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: msg })
+    }).catch(e => console.warn("Telegram notification error:", e));
   }
+
+  callGasApi("clients/save", newClient);
+  callGasApi("orders/approve", { orderId: orderId, client: newClient });
+
+  renderOrdersTable();
+  renderClientsTable();
+  updateRealKpiDisplays();
+
+  addLiveLog(`سفارش ${orderId} مشتری «${customerName}» تایید و حساب با مشخصات @${username} ساخته شد.`, "success");
+  alert(`سفارش ${orderId} تایید شد!
+حساب کاربری جدید برای مشتری ایجاد گردید:
+نام کاربری: @${username}
+رمز عبور: ${password}`);
 }
 
+// ==============================================================================
+// مدیریت مشترکین، بازرسی پنل و سقف دستگاه‌ها (Client Management & Features)
+// ==============================================================================
 function renderClientsTable() {
   const tbody = document.getElementById("clientsTableBody");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   if (AppState.clients.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">هنوز مشتری فعالی ثبت نشده است. با تایید اولین سفارش یا زدن دکمه «افزودن مشترک جدید»، حساب مشتری ساخته می‌شود.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">هنوز مشتری فعالی ثبت نشده است. با زدن دکمه «افزودن مشترک جدید» یا تایید سفارشات ربات، حساب مشتری ایجاد می‌شود.</td></tr>`;
     return;
   }
 
   AppState.clients.forEach(c => {
     const tr = document.createElement("tr");
-    tr.className = "hover:bg-slate-800/50 transition";
+    tr.className = "hover:bg-slate-800/50 transition border-b border-white/5";
     tr.innerHTML = `
-      <td class="py-2.5 px-3 font-semibold text-white">${c.fullName}</td>
-      <td class="py-2.5 px-3 text-cyan-400 font-mono text-[11px] ltr text-right">@${c.username}</td>
-      <td class="py-2.5 px-3 font-bold text-amber-300 uppercase">${c.planId}</td>
-      <td class="py-2.5 px-3 persian-nums">${c.channelsCount} کانال</td>
-      <td class="py-2.5 px-3 text-slate-300 persian-nums">${c.subEnd}</td>
-      <td class="py-2.5 px-3">
-        <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300">فعال</span>
+      <td class="py-2.5 px-3 font-semibold text-white whitespace-nowrap">${c.fullName}</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-mono text-[11px] ltr text-right whitespace-nowrap">@${c.username}</td>
+      <td class="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap">
+        <div class="flex items-center gap-1.5">
+          <span id="pass-${c.id}" class="text-slate-400">••••••••</span>
+          <button onclick="toggleClientPassword('${c.id}', '${c.password}')" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700/50 transition" title="مشاهده رمز">
+            <i data-lucide="eye" id="pass-icon-${c.id}" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="copyToClipboard('${c.password}', 'رمز عبور مشترک کپی شد')" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700/50 transition" title="کپی رمز">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       </td>
-      <td class="py-2.5 px-3 text-left">
-        <button class="text-xs text-cyan-400 hover:underline">ویرایش دسترسی</button>
+      <td class="py-2.5 px-3 font-bold text-amber-300 uppercase whitespace-nowrap">${c.planId}</td>
+      <td class="py-2.5 px-3 persian-nums whitespace-nowrap">${c.channelsCount || 0} کانال</td>
+      <td class="py-2.5 px-3 text-slate-300 persian-nums text-xs whitespace-nowrap">${c.subEnd || "۳۰ روز"}</td>
+      <td class="py-2.5 px-3 whitespace-nowrap">
+        <span class="px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold persian-nums">${c.activeDevices || 1} از ${c.deviceLimit || 2} مجاز</span>
+      </td>
+      <td class="py-2.5 px-3 text-left whitespace-nowrap">
+        <div class="flex items-center gap-2">
+          <button onclick="impersonateClient('${c.id}')" class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold transition border border-cyan-500/30 flex items-center gap-1">
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <span>مشاهده پنل (Inspect)</span>
+          </button>
+          <button onclick="deleteClient('${c.id}')" class="p-1 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="حذف مشترک">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function openNewClientModal() {
+  const modal = document.getElementById("newClientModal");
+  if (!modal) return;
+  document.getElementById("newClientFullName").value = "";
+  document.getElementById("newClientUsername").value = "";
+  generateRandomPassword();
+  document.getElementById("newClientPlan").value = "advanced";
+  document.getElementById("newClientDuration").value = "30";
+  document.getElementById("newClientDeviceLimit").value = "2";
+  openModal("newClientModal");
+}
+
+function generateRandomPassword() {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  let pass = "Avx-";
+  for (let i = 0; i < 6; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const input = document.getElementById("newClientPassword");
+  if (input) input.value = pass;
+  return pass;
+}
+
+function handleCreateClientSubmit(event) {
+  event.preventDefault();
+  const fullName = document.getElementById("newClientFullName").value.trim();
+  let username = document.getElementById("newClientUsername").value.trim().replace(/^@/, "");
+  const password = document.getElementById("newClientPassword").value.trim();
+  const planId = document.getElementById("newClientPlan").value;
+  const durationDays = parseInt(document.getElementById("newClientDuration").value) || 30;
+  const deviceLimit = parseInt(document.getElementById("newClientDeviceLimit").value) || 2;
+
+  if (!fullName || !username || !password) {
+    alert("لطفاً تمامی فیلدهای الزامی (نام، نام کاربری و رمز عبور) را تکمیل نمایید.");
+    return;
+  }
+
+  if (username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad" || AppState.clients.some(c => c.username.toLowerCase() === username.toLowerCase())) {
+    alert("این نام کاربری قبلاً ثبت شده است. لطفاً نام کاربری دیگری انتخاب کنید.");
+    return;
+  }
+
+  const newClient = {
+    id: "CLI-" + Date.now().toString().slice(-6),
+    fullName: fullName,
+    username: username,
+    password: password,
+    planId: planId,
+    channelsCount: 0,
+    subEnd: `${durationDays} روز تا تمدید`,
+    deviceLimit: deviceLimit,
+    activeDevices: 1,
+    status: "active",
+    createdAt: new Date().toISOString()
+  };
+
+  AppState.clients.unshift(newClient);
+  localStorage.setItem("AVEXRAD_CLIENTS", JSON.stringify(AppState.clients));
+
+  REGISTERED_CLIENT_ACCOUNTS.push({
+    username: newClient.username,
+    password: newClient.password,
+    fullName: newClient.fullName,
+    planId: newClient.planId,
+    deviceLimit: newClient.deviceLimit
+  });
+  localStorage.setItem("AVEXRAD_REGISTERED_CLIENTS", JSON.stringify(REGISTERED_CLIENT_ACCOUNTS));
+
+  callGasApi("clients/save", newClient);
+
+  renderClientsTable();
+  updateRealKpiDisplays();
+  closeModal("newClientModal");
+  addLiveLog(`مشترک جدید «${fullName}» با نام کاربری @${username} با موفقیت ایجاد گردید.`, "success");
+  alert(`مشترک «${fullName}» با موفقیت افزوده شد.
+نام کاربری: @${username}
+رمز عبور: ${password}`);
+}
+
+function toggleClientPassword(clientId, realPass) {
+  const el = document.getElementById(`pass-${clientId}`);
+  const icon = document.getElementById(`pass-icon-${clientId}`);
+  if (!el) return;
+  if (el.textContent === "••••••••") {
+    el.textContent = realPass;
+    el.classList.remove("text-slate-400");
+    el.classList.add("text-emerald-400", "font-bold");
+    if (icon) icon.setAttribute("data-lucide", "eye-off");
+  } else {
+    el.textContent = "••••••••";
+    el.classList.remove("text-emerald-400", "font-bold");
+    el.classList.add("text-slate-400");
+    if (icon) icon.setAttribute("data-lucide", "eye");
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function impersonateClient(clientId) {
+  const client = AppState.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  sessionStorage.setItem("AVEXRAD_ORIGINAL_ADMIN", JSON.stringify(AppState.user));
+  AppState.isImpersonating = true;
+  AppState.impersonatedClient = client;
+
+  AppState.user = {
+    username: client.username,
+    fullName: client.fullName,
+    planId: client.planId,
+    role: "client",
+    isImpersonated: true
+  };
+
+  applyPlanRole(client.planId);
+
+  const banner = document.getElementById("impersonationBanner");
+  const textEl = document.getElementById("impersonationTargetName");
+  if (banner) banner.classList.remove("hidden");
+  if (textEl) textEl.textContent = `${client.fullName} (@${client.username}) - پلن: ${client.planId.toUpperCase()}`;
+
+  switchTab("tabDashboard");
+  addLiveLog(`حالت بازرسی فعال شد: در حال مشاهده پنل مشترک ${client.fullName} (@${client.username}).`, "warning");
+}
+
+function stopImpersonating() {
+  const savedAdmin = sessionStorage.getItem("AVEXRAD_ORIGINAL_ADMIN");
+  if (savedAdmin) {
+    AppState.user = JSON.parse(savedAdmin);
+  } else {
+    AppState.user = {
+      username: "AmirAli_AvexRad",
+      fullName: "امیرعلی عبدالعظیمی",
+      role: "super_admin",
+      planId: "super_admin"
+    };
+  }
+  AppState.isImpersonating = false;
+  AppState.impersonatedClient = null;
+  sessionStorage.removeItem("AVEXRAD_ORIGINAL_ADMIN");
+
+  const banner = document.getElementById("impersonationBanner");
+  if (banner) banner.classList.add("hidden");
+
+  applyPlanRole("super_admin");
+  ensureOfficialChannelsForAdmin();
+  renderChannelButtons();
+  switchTab("tabAdminOrders");
+  addLiveLog("از حالت بازرسی خارج شدید و به پنل فرماندهی ارشد بازگشتید.", "info");
+}
+
+function deleteClient(clientId) {
+  const idx = AppState.clients.findIndex(c => c.id === clientId);
+  if (idx === -1) return;
+  const client = AppState.clients[idx];
+  if (!confirm(`آیا از حذف مشترک «${client.fullName}» (@${client.username}) مطمئن هستید؟`)) return;
+
+  AppState.clients.splice(idx, 1);
+  localStorage.setItem("AVEXRAD_CLIENTS", JSON.stringify(AppState.clients));
+
+  const regIdx = REGISTERED_CLIENT_ACCOUNTS.findIndex(c => c.username.toLowerCase() === client.username.toLowerCase());
+  if (regIdx !== -1) {
+    REGISTERED_CLIENT_ACCOUNTS.splice(regIdx, 1);
+    localStorage.setItem("AVEXRAD_REGISTERED_CLIENTS", JSON.stringify(REGISTERED_CLIENT_ACCOUNTS));
+  }
+
+  callGasApi("clients/delete", { id: clientId, username: client.username });
+  renderClientsTable();
+  updateRealKpiDisplays();
+  addLiveLog(`مشترک «${client.fullName}» از سامانه حذف گردید.`, "info");
+}
+
+// ----------------- سیستم کنترل سقف دستگاه‌ها (Multi-Device Policy) -----------------
+function getOrCreateDeviceId() {
+  let devId = localStorage.getItem("AVEXRAD_DEVICE_ID");
+  if (!devId) {
+    devId = "dev_" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("AVEXRAD_DEVICE_ID", devId);
+  }
+  return devId;
+}
+
+function checkDeviceLimit(username, planId) {
+  if (planId === "super_admin" || username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad") {
+    updateDeviceLimitDisplay(1, "نامحدود");
+    return true;
+  }
+
+  const devId = getOrCreateDeviceId();
+  const key = "AVEXRAD_DEVICES_" + username.toLowerCase();
+  let devices = JSON.parse(localStorage.getItem(key) || "[]");
+
+  const clientObj = AppState.clients.find(c => c.username.toLowerCase() === username.toLowerCase());
+  const maxAllowed = (clientObj && clientObj.deviceLimit) ? clientObj.deviceLimit : 2;
+
+  if (devices.includes(devId)) {
+    updateDeviceLimitDisplay(devices.length, maxAllowed);
+    return true;
+  }
+
+  if (devices.length >= maxAllowed) {
+    showDeviceLimitModal(username, devices.length, maxAllowed);
+    return false;
+  }
+
+  devices.push(devId);
+  localStorage.setItem(key, JSON.stringify(devices));
+  updateDeviceLimitDisplay(devices.length, maxAllowed);
+  return true;
+}
+
+function showDeviceLimitModal(username, currentCount, maxAllowed) {
+  window.pendingDeviceLoginUsername = username;
+  const countEl = document.getElementById("deviceLimitCurrentCount");
+  if (countEl) countEl.textContent = `${currentCount} از ${maxAllowed} دستگاه مجاز`;
+  openModal("deviceLimitModal");
+}
+
+function replaceActiveDevice() {
+  const username = window.pendingDeviceLoginUsername || (AppState.user && AppState.user.username);
+  if (!username) return;
+
+  const devId = getOrCreateDeviceId();
+  const key = "AVEXRAD_DEVICES_" + username.toLowerCase();
+  let devices = [devId];
+  localStorage.setItem(key, JSON.stringify(devices));
+
+  closeModal("deviceLimitModal");
+  addLiveLog("دستگاه‌های قبلی با موفقیت خارج شدند و نشست این دستگاه فعال شد.", "success");
+  alert("سایر دستگاه‌ها با موفقیت خارج شدند. اکنون وارد پنل می‌شوید.");
+
+  const client = REGISTERED_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase());
+  if (client) {
+    loginSuccess({
+      username: client.username,
+      fullName: client.fullName,
+      role: "client",
+      planId: client.planId
+    }, true);
+  }
+}
+
+function updateDeviceLimitDisplay(activeCount, maxAllowed) {
+  const badge = document.getElementById("profileActiveDevicesBadge");
+  if (badge) badge.textContent = `${activeCount} از ${maxAllowed} دستگاه فعال`;
+  const dashText = document.getElementById("dashActiveDevicesText");
+  if (dashText) dashText.textContent = `${activeCount} از ${maxAllowed} فعال`;
+}
+
+// ----------------- فیلتر و جستجوی لایو در راهنما و آموزش (Help & FAQ) -----------------
+let currentHelpCategory = "all";
+
+function setHelpCategory(category) {
+  currentHelpCategory = category;
+  const catBtns = document.querySelectorAll(".help-cat-pill");
+  catBtns.forEach(btn => {
+    if (btn.dataset.category === category) {
+      btn.className = "help-cat-pill px-3 py-1.5 rounded-xl text-xs font-bold transition bg-cyan-500 text-slate-950 shadow-sm";
+    } else {
+      btn.className = "help-cat-pill px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 border border-white/10 text-slate-400 hover:text-white";
+    }
+  });
+  filterHelpFaq();
+}
+
+function filterHelpFaq() {
+  const query = (document.getElementById("helpSearchInput")?.value || "").toLowerCase().trim();
+  const items = document.querySelectorAll(".faq-item-card");
+
+  items.forEach(card => {
+    const itemCat = card.dataset.category || "all";
+    const text = card.textContent.toLowerCase();
+    const matchCat = (currentHelpCategory === "all" || itemCat === currentHelpCategory);
+    const matchQuery = (!query || text.includes(query));
+
+    if (matchCat && matchQuery) {
+      card.classList.remove("hidden");
+    } else {
+      card.classList.add("hidden");
+    }
   });
 }
 
