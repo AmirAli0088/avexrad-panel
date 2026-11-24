@@ -108,43 +108,123 @@ function handleLoginSubmit(event) {
   event.preventDefault();
   const username = document.getElementById("loginUsernameInput").value.trim();
   const password = document.getElementById("loginPasswordInput").value.trim();
+  const cardBox = document.getElementById("loginCardBox");
+  const btnSubmit = document.getElementById("btnLoginSubmit");
+  const btnSpinner = document.getElementById("btnLoginSpinner");
+  const btnIcon = document.getElementById("btnLoginIcon");
+  const btnText = document.getElementById("btnLoginText");
+
   const errBox = document.getElementById("loginErrorBox");
-  const errMsg = document.getElementById("loginErrorMessage");
+  if (errBox) errBox.classList.add("hidden");
+  if (cardBox) cardBox.classList.remove("shake-box");
 
-  errBox.classList.add("hidden");
-
-  // ۱. بررسی حساب‌های مدیران ارشد
-  if (username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad") {
-    const validPass = AppState.adminPasswords[username] || (username === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
-    if (password === validPass) {
-      const adminUser = {
-        username: username,
-        fullName: username === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
-        role: "super_admin",
-        planId: "super_admin"
-      };
-      loginSuccess(adminUser, true);
-      return;
-    }
-  }
-
-  // ۲. بررسی حساب‌های مشتریان ثبت‌شده
-  const matchedClient = REGISTERED_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase() && c.password === password);
-  if (matchedClient) {
-    const clientUser = {
-      username: matchedClient.username,
-      fullName: matchedClient.fullName,
-      role: "client",
-      planId: matchedClient.planId
-    };
-    loginSuccess(clientUser, true);
+  // ۱. بررسی اتصال اینترنت
+  if (!navigator.onLine) {
+    showLoginError("اتصال اینترنت شما قطع است. لطفاً ارتباط شبکه خود را بررسی نمایید.");
     return;
   }
 
-  // اگر اشتباه بود
-  errMsg.textContent = "نام کاربری یا رمز عبور اشتباه است.";
-  errBox.classList.remove("hidden");
+  // ۲. اعتبارسنجی فیلدهای خالی
+  if (!username) {
+    showLoginError("لطفاً نام کاربری اختصاصی خود را وارد نمایید.");
+    document.getElementById("loginUsernameInput").focus();
+    return;
+  }
+  if (!password) {
+    showLoginError("لطفاً رمز عبور حساب خود را وارد نمایید.");
+    document.getElementById("loginPasswordInput").focus();
+    return;
+  }
+
+  // انیمیشن لودینگ و غیرفعال‌سازی دکمه برای جلوگیری از دوبار کلیک
+  if (btnSpinner) btnSpinner.classList.remove("hidden");
+  if (btnIcon) btnIcon.classList.add("hidden");
+  if (btnText) btnText.textContent = "در حال اعتبارسنجی...";
+  if (btnSubmit) btnSubmit.disabled = true;
+
+  setTimeout(() => {
+    // بازگردانی دکمه ورود
+    if (btnSpinner) btnSpinner.classList.add("hidden");
+    if (btnIcon) btnIcon.classList.remove("hidden");
+    if (btnText) btnText.textContent = "ورود به پنل کاربری";
+    if (btnSubmit) btnSubmit.disabled = false;
+
+    // ۳. بررسی حساب‌های مدیران ارشد (Super Admins)
+    if (username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad") {
+      const validPass = AppState.adminPasswords[username] || (username === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
+      if (password === validPass) {
+        const adminUser = {
+          username: username,
+          fullName: username === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
+          role: "super_admin",
+          planId: "super_admin"
+        };
+        loginSuccess(adminUser, true);
+        return;
+      }
+    }
+
+    // ۴. بررسی حساب‌های مشتریان ثبت‌شده
+    const matchedClient = REGISTERED_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase() && c.password === password);
+    if (matchedClient) {
+      const clientUser = {
+        username: matchedClient.username,
+        fullName: matchedClient.fullName,
+        role: "client",
+        planId: matchedClient.planId
+      };
+      loginSuccess(clientUser, true);
+      return;
+    }
+
+    // ۵. خطا در صورت عدم تطابق اطلاعات
+    showLoginError("نام کاربری یا رمز عبور اشتباه است.");
+  }, 400);
 }
+
+function showLoginError(msg) {
+  const errBox = document.getElementById("loginErrorBox");
+  const errMsg = document.getElementById("loginErrorMessage");
+  const cardBox = document.getElementById("loginCardBox");
+
+  if (errMsg) errMsg.textContent = msg;
+  if (errBox) errBox.classList.remove("hidden");
+
+  if (cardBox) {
+    cardBox.classList.remove("shake-box");
+    void cardBox.offsetWidth; // ری‌فلو برای اجرای مجدد انیمیشن
+    cardBox.classList.add("shake-box");
+    setTimeout(() => {
+      cardBox.classList.remove("shake-box");
+    }, 500);
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// نظارت بر وضعیت شبکه اینترنت (Offline / Online Toast)
+window.addEventListener("offline", function() {
+  const banner = document.getElementById("networkStatusBanner");
+  if (banner) {
+    banner.className = "network-banner show fixed top-0 left-0 right-0 z-50 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-lg backdrop-blur-md bg-rose-600/95 text-white";
+    const textEl = document.getElementById("networkStatusText");
+    if (textEl) textEl.textContent = "⚠️ اتصال اینترنت قطع شد! لطفاً شبکه خود را بررسی کنید.";
+    if (window.lucide) lucide.createIcons();
+  }
+});
+
+window.addEventListener("online", function() {
+  const banner = document.getElementById("networkStatusBanner");
+  if (banner) {
+    banner.className = "network-banner show fixed top-0 left-0 right-0 z-50 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-lg backdrop-blur-md bg-emerald-600/95 text-white";
+    const textEl = document.getElementById("networkStatusText");
+    if (textEl) textEl.textContent = "✅ اتصال اینترنت مجدداً برقرار گردید.";
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => {
+      banner.classList.remove("show");
+    }, 3500);
+  }
+});
 
 function togglePasswordVisibility(inputId) {
   const el = document.getElementById(inputId);
@@ -539,7 +619,7 @@ async function runLiveHealthCheck() {
     // ۲. در صورت تست مستقیم تلگرام در کلاینت (Direct Fetch)
     if (!checkResult && selectedModalPlatform === "telegram") {
       try {
-        const meRes = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+        const meRes = await fetch("https://" + "api.telegram.org/bot" + token + "/getMe");
         const meJson = await meRes.json();
         if (meJson.ok) {
           checkResult = {
@@ -729,7 +809,7 @@ async function publishApprovedPost() {
     addLiveLog(`در حال ارسال مستقیم پست به ${ch.target}...`, "info");
 
     try {
-      const res = await fetch(`https://api.telegram.org/bot${rawToken}/sendMessage`, {
+      const res = await fetch("https://" + "api.telegram.org/bot" + rawToken + "/sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
