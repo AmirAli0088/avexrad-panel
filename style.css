@@ -182,3 +182,26 @@ input:checked + .switch-track-purple .switch-thumb {
 .animate-pulse-subtle {
   animation: pulse-subtle 3s infinite ease-in-out;
 }
+
+/* انیمیشن لرزش کارت هنگام ورود اشتباه (Shake Effect) */
+@keyframes shake-anim {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.shake-box {
+  animation: shake-anim 0.4s ease-in-out;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.35) !important;
+}
+
+/* بنر وضعیت اینترنت (Network Toast) */
+.network-banner {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-100%);
+}
+
+.network-banner.show {
+  transform: translateY(0);
+}
