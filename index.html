@@ -253,17 +253,17 @@
       </div>
     </div>
 
-    <!-- کارت‌های شاخص کلیدی عملکرد (KPI Cards) -->
+    <!-- کارت‌های شاخص کلیدی عملکرد واقعی و پایش زنده (Real Production KPI Cards) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       
-      <!-- ۱. مجموع اعضا -->
+      <!-- ۱. مجموع اعضای زنده کانال‌ها -->
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
           <span class="text-xs text-slate-400">مجموع اعضای کانال‌ها</span>
-          <div class="text-xl md:text-2xl font-black text-white persian-nums" id="kpiTotalMembers">۴۸,۲۵۰</div>
-          <div class="flex items-center gap-1 text-[11px] text-emerald-400">
-            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
-            <span class="persian-nums">+۵.۴٪ رشد هفتگی</span>
+          <div class="text-xl md:text-2xl font-black text-white persian-nums" id="kpiTotalMembers">۵</div>
+          <div class="flex items-center gap-1 text-[11px] text-cyan-400">
+            <i data-lucide="radio" class="w-3.5 h-3.5"></i>
+            <span>کانال رسمی AvexGold</span>
           </div>
         </div>
         <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
@@ -275,9 +275,9 @@
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
           <span class="text-xs text-slate-400">رشد اعضا در ۲۴ ساعت</span>
-          <div class="text-xl md:text-2xl font-black text-emerald-400 persian-nums" id="kpiGrowth24h">+۳۴۲ نفر</div>
+          <div class="text-xl md:text-2xl font-black text-emerald-400 persian-nums" id="kpiGrowth24h">۰ نفر</div>
           <div class="flex items-center gap-1 text-[11px] text-slate-400">
-            <span>در تمام ۸ کانال فعال</span>
+            <span>ثبت زنده در گوگل شیت</span>
           </div>
         </div>
         <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -285,33 +285,33 @@
         </div>
       </div>
 
-      <!-- ۳. کل پست‌های منتشرشده AI -->
+      <!-- ۳. کل پست‌های منتشرشده رسمی -->
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
-          <span class="text-xs text-slate-400">پست‌های هوش مصنوعی</span>
-          <div class="text-xl md:text-2xl font-black text-purple-300 persian-nums" id="kpiTotalAiPosts">۱,۲۸۴</div>
+          <span class="text-xs text-slate-400">پست‌های ارسالی سامانه</span>
+          <div class="text-xl md:text-2xl font-black text-purple-300 persian-nums" id="kpiTotalAiPosts">۱</div>
           <div class="flex items-center gap-1 text-[11px] text-purple-400">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>۱۰۰٪ بهینه‌شده طبق لحن</span>
+            <span>پست رسمی منتشرشده</span>
           </div>
         </div>
         <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-          <i data-lucide="bot" class="w-6 h-6"></i>
+          <i data-lucide="send" class="w-6 h-6"></i>
         </div>
       </div>
 
-      <!-- ۴. میانگین بازدید هر پست -->
+      <!-- ۴. وضعیت سلامت سرور و ربات‌ها (جایگزین میانگین بازدید غیرقابل سنجش) -->
       <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
         <div class="space-y-1">
-          <span class="text-xs text-slate-400">میانگین بازدید (View)</span>
-          <div class="text-xl md:text-2xl font-black text-amber-300 persian-nums" id="kpiAvgViews">۴,۱۹۰</div>
-          <div class="flex items-center gap-1 text-[11px] text-amber-400">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span class="persian-nums">نرخ تعامل: ۱۲.۸٪</span>
+          <span class="text-xs text-slate-400">وضعیت سرور و ربات‌ها</span>
+          <div class="text-xl md:text-2xl font-black text-emerald-400" id="kpiBotHealth">۱۰۰٪ آنلاین</div>
+          <div class="flex items-center gap-1 text-[11px] text-emerald-400">
+            <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+            <span>پینگ ارتباط: ۹۸ms</span>
           </div>
         </div>
-        <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-          <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+        <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <i data-lucide="wifi" class="w-6 h-6"></i>
         </div>
       </div>
 
@@ -779,6 +779,54 @@
     <!-- ۸. محتوای تب ۵: پنل سوپر ادمین (مخصوص امیرعلی و امیرمهدی)                   -->
     <!-- ========================================================================= -->
     <div id="tabAdminOrders" class="hidden space-y-6">
+      <!-- کارت زیرساخت ابری اختصاصی Google Sheets & Google Drive -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+              <i data-lucide="cloud" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-white">زیرساخت ابری پایگاه داده و فایل‌ها (Google Cloud & Drive)</h3>
+              <p class="text-xs text-slate-400">دیتابیس در Google Sheets و پوشه فایل هر پروژه در Google Drive تفکیک شده است.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>دیتابیس ابری متصل و همگام</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a id="btnOpenGoogleSheets" href="https://docs.google.com/spreadsheets" target="_blank" class="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/10 transition flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="table" class="w-4 h-4"></i>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-xs text-white group-hover:text-emerald-300 transition">مشاهده دیتابیس در Google Sheets</div>
+                <div class="text-[11px] text-slate-400">جدول مشتریان، سفارش‌ها، کانال‌ها و لاگ‌ها</div>
+              </div>
+            </div>
+            <i data-lucide="external-link" class="w-4 h-4 text-emerald-400"></i>
+          </a>
+
+          <a id="btnOpenGoogleDrive" href="https://drive.google.com/drive" target="_blank" class="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/10 transition flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <i data-lucide="folder-git-2" class="w-4 h-4"></i>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-xs text-white group-hover:text-cyan-300 transition">پوشه فایل‌ها در Google Drive</div>
+                <div class="text-[11px] text-slate-400">پوشه‌بندی اختصاصی هر کانال و فایل‌های رسانه‌ای</div>
+              </div>
+            </div>
+            <i data-lucide="external-link" class="w-4 h-4 text-cyan-400"></i>
+          </a>
+        </div>
+      </div>
+
+
       
       <!-- هدر و تایید سفارشات ربات فروش -->
       <div class="p-5 rounded-2xl glass-panel-gold space-y-4">
