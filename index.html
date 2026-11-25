@@ -184,7 +184,7 @@
       </button>
 
       <button onclick="switchTab('tabStudio'); closeMobileDrawer();" id="drawerTabStudio" class="w-full text-right p-2.5 rounded-xl font-semibold text-slate-300 hover:bg-slate-900 transition flex items-center justify-between">
-        <span class="flex items-center gap-2"><i data-lucide="wand-2" class="w-4 h-4 text-purple-400"></i> استودیو هوش مصنوعی</span>
+        <span class="flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-purple-400"></i> ایجنت و انتشار سریع</span>
         <span id="drawerLockStudio" class="tab-locked-badge hidden">🔒 قفل</span>
       </button>
 
@@ -296,8 +296,8 @@
         </button>
 
         <button onclick="switchTab('tabStudio')" id="navTabStudio" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 text-slate-400 hover:text-white hover:bg-slate-800">
-          <i data-lucide="wand-2" class="w-4 h-4 text-purple-400"></i>
-          <span>استودیو هوش مصنوعی</span>
+          <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+          <span>ایجنت و انتشار سریع</span>
           <span id="lockBadgeStudio" class="tab-locked-badge hidden">🔒</span>
         </button>
 
@@ -753,7 +753,7 @@
         <div class="space-y-1">
           <h3 class="text-base sm:text-lg font-bold text-white">استودیو چندرسانه‌ای هوش مصنوعی قفل است</h3>
           <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-            جهت تولید محتوای هوشمند با Gemini 2.0 Flash، طراحی پوستر با لوگوی اختصاصی و تولید ریلز، ابتدا باید حداقل یک کانال ارتباطی فعال اضافه کنید.
+            جهت مشاهده وضعیت ایجنت اختصاصی، ثبت درخواست سناریو و انتشار همزمان محتوای آماده در کانال‌ها، ابتدا باید حداقل یک کانال ارتباطی فعال اضافه کنید.
           </p>
         </div>
         <button onclick="openAddChannelModal(); switchTab('tabChannels');" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs hover:brightness-110 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
@@ -762,216 +762,151 @@
         </button>
       </div>
 
-      <!-- نوار تنظیمات و اتصال زنده API هوش مصنوعی -->
-      <div class="p-4 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-3 border border-purple-500/20">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
-            <i data-lucide="cpu" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-white flex items-center gap-2">
-              <span>موتور پردازش زنده هوش مصنوعی</span>
-              <span id="aiEngineStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">متصل به API ابری</span>
-            </div>
-            <p class="text-[11px] text-slate-400">تولید واقعی متن، تصویر و ویدیو بر اساس موضوع دلخواه شما (پشتیبانی از Gemini API و Cloud AI)</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="password" id="geminiApiKeyInput" class="w-48 sm:w-60 bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white ltr placeholder-slate-500 focus:outline-none focus:border-purple-400" placeholder="کلید Gemini API (اختیاری: AIza...)">
-          <button type="button" onclick="saveGeminiApiKey()" class="px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-bold transition cursor-pointer">
-            ذخیره کلید
-          </button>
-        </div>
-      </div>
+      <!-- بخش ۱: وضعیت ایجنت اختصاصی و درخواست سناریو -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- ۱. تولید محتوای متنی واقعی با هوش مصنوعی -->
-        <div class="lg:col-span-2 p-5 rounded-2xl glass-panel space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+        <!-- کارت وضعیت ایجنت اختصاصی کانال -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4 border border-purple-500/20">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
+                <i data-lucide="bot" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-white">وضعیت ایجنت اختصاصی کانال شما</h3>
+                <p class="text-[11px] text-slate-400">مدیریت و زمان‌بندی خودکار پست‌ها توسط تیم فنی اَوِکس راد</p>
+              </div>
+            </div>
+            <span id="clientAgentStatusBadge" class="text-[10px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-white/10 font-bold">
+              در انتظار تنظیم
+            </span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">شناسه ایجنت اختصاصی:</span>
+              <span id="clientAgentIdText" class="font-mono text-cyan-300 font-bold ltr">تنظیم نشده</span>
+            </div>
+            <div class="flex items-start justify-between gap-2 pt-1 border-t border-white/5">
+              <span class="text-slate-400 shrink-0">سناریوهای فعال:</span>
+              <span id="clientAgentSchedulesText" class="text-slate-200 text-left leading-relaxed">هنوز سناریوی خودکاری برای این حساب ثبت نشده است. از فرم روبرو درخواست دهید.</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+              <span>گزارش‌های اخیر اجرای ایجنت:</span>
+              <button type="button" onclick="refreshClientAgentState()" class="text-[11px] text-cyan-400 hover:text-cyan-300 cursor-pointer flex items-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                <span>بروزرسانی</span>
+              </button>
+            </div>
+            <div id="clientAgentLogsList" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-[11px] text-slate-400">
+              <div class="p-2.5 rounded-lg bg-slate-950/60 border border-white/5 text-center">گزارشی هنوز ثبت نشده است.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- کارت درخواست سناریو و زمان‌بندی به پشتیبانی/تلگرام -->
+        <div class="p-5 rounded-2xl glass-panel space-y-4 border border-cyan-500/20">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
               <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-                <span>تولیدکننده هوشمند متن و کپشن (Real AI Writer)</span>
+                <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                <span>درخواست سناریو و محتوای اختصاصی</span>
               </h3>
-              <p class="text-xs text-slate-400">هر موضوع یا دستوری بنویسید تا هوش مصنوعی متن کامل، حرفه‌ای و آماده انتشار بسازد</p>
+              <p class="text-[11px] text-slate-400">نوع محتوا، موضوع و ساعت‌های دلخواه ارسال خودکار را بنویسید تا ایجنت اختصاصی برایتان تنظیم شود</p>
             </div>
-            <select id="aiToneSelect" class="bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-purple-200 focus:outline-none">
-              <option value="professional">لحن: حرفه‌ای و خبری</option>
-              <option value="sales">لحن: تبلیغاتی و جذب مشتری</option>
-              <option value="educational">لحن: آموزشی و کاربردی</option>
-              <option value="analytical">لحن: تحلیلی و تخصصی</option>
-              <option value="friendly">لحن: صمیمی و تعاملی</option>
-            </select>
           </div>
 
           <div class="space-y-3">
-            <div class="flex flex-col sm:flex-row gap-2">
-              <input type="text" id="aiTopicInput" class="flex-1 bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400" placeholder="مثال: معرفی خدمات طراحی سایت اَوِکس‌راد یا آموزش هوش مصنوعی در کسب‌وکار">
-              <button type="button" id="btnGenerateAiDraft" onclick="generateAiDraftPost()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs hover:brightness-110 transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer shrink-0">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                <span>تولید متن با AI</span>
+            <textarea id="scenarioRequestInput" rows="4" class="w-full bg-slate-900/90 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 leading-relaxed" placeholder="مثال: لطفاً برای کانال من هر روز ساعت ۱۰ صبح یک تصویر + تحلیل کوتاه درباره موضوع ... و ساعت ۲۰ یک جمع‌بندی ارسال شود."></textarea>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button type="button" id="btnSubmitScenarioReq" onclick="submitScenarioRequest()" class="py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-xs hover:brightness-110 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-cyan-500/20">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>ارسال درخواست به مدیریت و تلگرام</span>
               </button>
+
+              <a href="https://t.me/AvexRad" target="_blank" class="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-purple-500/40 text-purple-300 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                <span>گفتگوی مستقیم در تلگرام (@AvexRad)</span>
+              </a>
             </div>
 
-            <!-- جعبه پیش‌نمایش محتوا با ویرایش قبل از تایید -->
-            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-300">متن تولیدشده توسط هوش مصنوعی (قابل ویرایش):</span>
-                <span id="aiDraftStatusLabel" class="text-emerald-400 flex items-center gap-1 text-[11px]">
-                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                  <span>آماده تولید محتوای واقعی</span>
-                </span>
-              </div>
-              <textarea id="aiDraftOutput" rows="7" class="w-full bg-slate-950/80 border border-white/5 rounded-lg p-3 text-xs text-slate-200 focus:outline-none leading-relaxed" placeholder="موضوع خود را بالا بنویسید و دکمه «تولید متن با AI» را بزنید..."></textarea>
-              
-              <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <button type="button" onclick="attachImageToDraft()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer transition">
-                    <i data-lucide="image" class="w-3.5 h-3.5 text-cyan-400"></i>
-                    <span>ساخت تصویر از این موضوع</span>
-                  </button>
-                  <button type="button" onclick="attachVideoToDraft()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer transition">
-                    <i data-lucide="film" class="w-3.5 h-3.5 text-purple-400"></i>
-                    <span>ساخت ویدیو از این موضوع</span>
-                  </button>
-                </div>
-                <button type="button" onclick="publishApprovedPost()" class="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition flex items-center gap-1.5 cursor-pointer">
-                  <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                  <span>تایید و ارسال به کانال</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ۲. استودیو تولید تصویر واقعی با هوش مصنوعی -->
-        <div class="p-5 rounded-2xl glass-panel space-y-3">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="palette" class="w-4 h-4 text-cyan-400"></i>
-              <span>استودیو تصویرسازی هوشمند</span>
-            </h3>
-            <span class="text-[11px] text-cyan-400 font-bold">API تصویرسازی</span>
-          </div>
-
-          <div class="space-y-2.5">
-            <div class="space-y-1">
-              <label class="text-[11px] text-slate-400">توضیح تصویر دلخواه (فارسی یا انگلیسی):</label>
-              <input type="text" id="aiImagePromptInput" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400" placeholder="مثال: یک دفتر کار مدرن آینده‌نگرانه با نورپردازی نئونی آبی">
-            </div>
-
-            <div class="space-y-1">
-              <label class="text-[11px] text-slate-400">سبک بصری تصویر:</label>
-              <select id="bannerStyleSelector" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
-                <option value="realistic">واقع‌گرایانه و عکاسی حرفه‌ای (Photorealistic)</option>
-                <option value="modern_3d">سه‌بعدی مدرن (3D Octane Render)</option>
-                <option value="cyber_neon">دیجیتال نئونی اَوِکس‌راد (Cyberpunk & Neon)</option>
-                <option value="minimalist">مینیمال و گرافیکی تمیز (Minimalist)</option>
-                <option value="cinematic">سینمایی و دراماتیک (Cinematic)</option>
-              </select>
-            </div>
-
-            <!-- پیش‌نمایش تصویر تولیدشده -->
-            <div id="bannerCanvasContainer" class="w-full aspect-[4/3] rounded-xl bg-slate-950 border border-white/10 flex flex-col items-center justify-center p-3 relative overflow-hidden group">
-              <div class="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-cyan-900/30"></div>
-              <div class="z-10 text-center space-y-2">
-                <div class="w-12 h-12 mx-auto rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                  <i data-lucide="image" class="w-6 h-6"></i>
-                </div>
-                <div class="text-xs text-slate-300 font-bold" id="bannerPreviewTitle">آماده تصویرسازی بر اساس دستور شما</div>
-                <span class="text-[10px] text-slate-500">هر نوع عکسی بخواهید با هوش مصنوعی خلق می‌شود</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-2">
-              <button type="button" id="btnGenerateAiImage" onclick="renderSampleBanner()" class="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-xs hover:brightness-110 transition flex items-center justify-center gap-1.5 cursor-pointer">
-                <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
-                <span>تولید تصویر واقعی با AI</span>
-              </button>
-              <div id="aiImageActionsBar" class="hidden grid grid-cols-2 gap-2">
-                <button type="button" onclick="downloadGeneratedImage()" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer">
-                  <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
-                  <span>دانلود تصویر</span>
-                </button>
-                <button type="button" onclick="publishImageToChannel()" class="py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer">
-                  <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                  <span>ارسال به کانال</span>
-                </button>
-              </div>
+            <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200 leading-relaxed">
+              💡 می‌توانید از طریق فرم بالا درخواست خود را ثبت کنید (بلافاصله به تلگرام مدیریت ارسال می‌شود) و یا مستقیماً به آیدی <b>@AvexRad</b> پیام دهید.
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- ۳. بخش تولید ویدیو و پادکست صوتی -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- ویدیوساز واقعی (Canvas + MediaRecorder AI Video Engine) -->
-        <div class="p-5 rounded-2xl glass-panel space-y-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <!-- بخش ۲: انتشار چندکاناله بدون اشغال فضا (Zero-Storage Multi-Channel Publisher) -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-emerald-500/20">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div>
             <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="film" class="w-4 h-4 text-cyan-400"></i>
-              <span>استودیو ساخت ویدیو و ریلز واقعی (Video Engine)</span>
+              <i data-lucide="share-2" class="w-4 h-4 text-emerald-400"></i>
+              <span>انتشار همزمان در همه کانال‌ها (بدون اشغال فضای سرور)</span>
             </h3>
-            <span class="text-xs text-cyan-400 font-bold">رندر مستقیم MP4/WebM</span>
+            <p class="text-xs text-slate-400">متن، عکس یا ویدیوی آماده خود را انتخاب کنید تا همزمان در کانال‌های متصل شما منتشر شود</p>
           </div>
-          <p class="text-xs text-slate-400">تولید فایل ویدیویی واقعی و قابل دانلود با ترکیب تصویر هوش مصنوعی، موشن‌گرافیک و متن دلخواه شما.</p>
+          <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
+            ⚡ پاکسازی خودکار و آنی پس از ارسال (Zero-Storage)
+          </span>
+        </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input type="text" id="aiVideoPromptInput" class="sm:col-span-2 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400" placeholder="عنوان یا موضوع ویدیو (خالی = استفاده از موضوع بالا)">
-            <select id="aiVideoFormatSelect" class="bg-slate-900 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
-              <option value="9:16">عمودی ریلز (9:16)</option>
-              <option value="16:9">افقی ویدیویی (16:9)</option>
-            </select>
-          </div>
-
-          <div id="videoPreviewContainer" class="hidden rounded-xl bg-slate-950 border border-white/10 p-3 space-y-2.5">
-            <video id="generatedVideoPlayer" controls playsinline class="w-full max-h-64 rounded-lg bg-black mx-auto"></video>
-            <div class="flex items-center justify-between gap-2">
-              <button type="button" onclick="downloadGeneratedVideo()" class="flex-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
-                <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
-                <span>دانلود فایل ویدیو</span>
-              </button>
-              <button type="button" onclick="publishVideoToChannel()" class="flex-1 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-bold hover:bg-emerald-400 flex items-center justify-center gap-1.5 cursor-pointer">
-                <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                <span>ارسال ویدیو به کانال</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-white/5">
-            <div class="flex items-center gap-3">
-              <i data-lucide="video" class="w-6 h-6 text-purple-400"></i>
-              <div>
-                <div class="text-xs font-bold text-white" id="videoStatusTitle">موتور رندر ویدیوی هوشمند آماده است</div>
-                <div class="text-[11px] text-slate-400" id="videoStatusDesc">ترکیب تصویر AI + موشن‌گرافیک + متن پویای فارسی</div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <!-- ستون راست: نوع محتوا، فایل و کپشن -->
+          <div class="lg:col-span-2 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">نوع محتوا:</label>
+                <select id="pubMediaTypeSelect" onchange="togglePublisherFileField()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                  <option value="text">📝 فقط متن و کپشن</option>
+                  <option value="photo">🖼 تصویر + کپشن</option>
+                  <option value="video">🎬 ویدیو + کپشن</option>
+                </select>
+              </div>
+              <div id="pubFileInputWrap" class="hidden space-y-1">
+                <label class="text-[11px] text-slate-400">انتخاب فایل (حداکثر ۱۵ مگابایت - بدون ذخیره در سرور):</label>
+                <input type="file" id="pubMediaFileInput" accept="image/*,video/*" onchange="previewPublisherFile()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 file:ml-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-cyan-500/20 file:text-cyan-300">
               </div>
             </div>
-            <button type="button" id="btnGenerateVideo" onclick="triggerVideoCreator()" class="px-3.5 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition cursor-pointer shrink-0">
-              ساخت ویدیو واقعی
-            </button>
+
+            <div id="pubFilePreviewBadge" class="hidden p-2.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 text-xs text-cyan-300 flex items-center justify-between">
+              <span id="pubFilePreviewName">-</span>
+              <button type="button" onclick="clearPublisherFile()" class="text-rose-400 hover:text-rose-300 text-[11px] font-bold cursor-pointer">حذف فایل</button>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[11px] text-slate-400">متن یا کپشن پست:</label>
+              <textarea id="pubCaptionInput" rows="5" class="w-full bg-slate-950/80 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 leading-relaxed" placeholder="متن یا کپشن آماده خود را اینجا بنویسید یا پیست کنید..."></textarea>
+            </div>
+          </div>
+
+          <!-- ستون چپ: انتخاب کانال‌های مقصد و دکمه ارسال -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-white/10 flex flex-col justify-between space-y-4">
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">کانال‌های مقصد:</span>
+                <button type="button" onclick="selectAllPublisherChannels()" class="text-[11px] text-cyan-400 hover:text-cyan-300 cursor-pointer font-bold">انتخاب همه</button>
+              </div>
+              <div id="pubTargetChannelsList" class="space-y-1.5 max-h-44 overflow-y-auto text-xs">
+                <!-- با JS پر می‌شود -->
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <button type="button" id="btnPublishMultiChannel" onclick="publishMultiChannelZeroStorage()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs hover:brightness-110 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-500/20">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>انتشار همزمان در کانال‌ها</span>
+              </button>
+              <p class="text-[10px] text-slate-500 text-center">فایل بلافاصله پس از ارسال موفق از حافظه پاک می‌شود.</p>
+            </div>
           </div>
         </div>
-
-        <!-- پادکست و تحلیل صوتی (به‌زودی) -->
-        <div class="p-5 rounded-2xl glass-panel space-y-4 opacity-75 relative overflow-hidden">
-          <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-            <span class="px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-lg">
-              <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-              <span>به‌زودی در آپدیت بعدی فعال می‌شود</span>
-            </span>
-          </div>
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="mic" class="w-4 h-4 text-amber-400"></i>
-              <span>استودیو پادکست و ویس تحلیلی (Voice Studio)</span>
-            </h3>
-          </div>
-          <p class="text-xs text-slate-400">تبدیل متن تحلیل بازار و اخبار به پادکست‌های رادیویی با صدای گوینده طبیعی هوش مصنوعی.</p>
-        </div>
-
       </div>
 
     </div>
@@ -1373,6 +1308,59 @@
 
 
       
+      <!-- بخش جدید پنل ادمین: ثبت و اتصال ایجنت‌های اختصاصی مشتریان (آنتی‌گرویتی) -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-purple-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div>
+            <h3 class="font-bold text-sm text-purple-300 flex items-center gap-2">
+              <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+              <span>مدیریت ایجنت اختصاصی مشتریان (اتصال آنتی‌گرویتی)</span>
+            </h3>
+            <p class="text-xs text-slate-400">ثبت شناسه و کلید امنیتی ایجنت هر مشتری جهت دریافت خودکار گزارش‌های اجرا در پنل</p>
+          </div>
+          <button type="button" onclick="copyAntigravityAgentPrompt()" class="px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>کپی دستورالعمل اتصال ایجنت در آنتی‌گرویتی</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">نام کاربری مشتری:</label>
+            <input type="text" id="admAgentUsername" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr" placeholder="مثلاً: AmirAli_AvexRad یا مشتری">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">شناسه ایجنت (Agent ID):</label>
+            <input type="text" id="admAgentId" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr" placeholder="AvexAgent_Client1">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">کلید امنیتی (Secret):</label>
+            <div class="flex gap-1.5">
+              <input type="text" id="admAgentSecret" class="flex-1 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-cyan-300 font-mono ltr" placeholder="AGX-...">
+              <button type="button" onclick="generateAgentSecretKey()" class="px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 font-bold cursor-pointer" title="ساخت کلید تصادفی">🎲</button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">کانال‌های تحت پوشش:</label>
+            <input type="text" id="admAgentChannels" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" placeholder="تلگرام، بله، ایتا">
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+          <div class="flex-1 space-y-1">
+            <label class="text-[11px] text-slate-400">برنامه زمان‌بندی و سناریوهای فعال:</label>
+            <input type="text" id="admAgentSchedules" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" placeholder="هر روز ۰۹:۰۰ ارسال تصویر و تحلیل | ۱۸:۰۰ جمع‌بندی">
+          </div>
+          <button type="button" onclick="saveAdminAgentConfig()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs hover:brightness-110 transition cursor-pointer shrink-0">
+            ثبت و فعال‌سازی ایجنت
+          </button>
+        </div>
+
+        <div id="adminAgentsList" class="space-y-2 text-xs">
+          <!-- با JS پر می‌شود -->
+        </div>
+      </div>
+
       <!-- هدر و تایید سفارشات ربات فروش -->
       <div class="p-5 rounded-2xl glass-panel-gold space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
