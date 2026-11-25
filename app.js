@@ -6,10 +6,50 @@
 // ==============================================================================
 // ۱. وضعیت عمومی سیستم (App State)
 // ==============================================================================
-// پاکسازی کانال‌های تستی قبلی و شروع با صفر کانال (آماده دریافت پروژه‌های جدید)
-let initialChannels = JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]");
-initialChannels = initialChannels.filter(c => c && c.id && !c.id.includes("avexgold") && !c.name.includes("گلد") && !c.name.includes("Gold") && !c.target.includes("avexgold"));
-localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(initialChannels));
+// پاکسازی کانال‌های تستی و طلا از حافظه عمومی
+function filterCleanChannels(list, isSuperAdmin) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(c => {
+    if (!c || !c.id) return false;
+    const idLower = String(c.id).toLowerCase();
+    const nameLower = String(c.name || "").toLowerCase();
+    const targetLower = String(c.target || "").toLowerCase();
+    if (idLower.includes("avexgold") || nameLower.includes("گلد") || nameLower.includes("gold") || targetLower.includes("avexgold") || nameLower.includes("طلا")) {
+      return false;
+    }
+    if (!isSuperAdmin && (c.isOfficial || idLower.startsWith("avexrad-official-"))) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function getChannelStorageKey(user) {
+  if (user && (user.role === "super_admin" || user.planId === "super_admin")) {
+    return "AVEXRAD_CHANNELS_ADMIN";
+  }
+  if (user && user.username) {
+    return "AVEXRAD_CHANNELS_" + user.username;
+  }
+  return "AVEXRAD_CHANNELS_GUEST";
+}
+
+function saveChannelsToStorage() {
+  if (!AppState.user) return;
+  const key = getChannelStorageKey(AppState.user);
+  localStorage.setItem(key, JSON.stringify(AppState.channels || []));
+}
+
+// پاکسازی کامل کلید قدیمی در صورت وجود بقایای AvexGold
+try {
+  const legacy = JSON.parse(localStorage.getItem("AVEXRAD_CHANNELS") || "[]");
+  const cleanedLegacy = filterCleanChannels(legacy, true);
+  if (cleanedLegacy.length !== legacy.length) {
+    localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(cleanedLegacy));
+  }
+} catch(e) {}
+
+let initialChannels = [];
 
 let initialOrders = JSON.parse(localStorage.getItem("AVEXRAD_PENDING_ORDERS") || "[]");
 if (initialOrders.some(o => o.id === "ORD-101" || o.id === "ORD-102")) {
@@ -19,7 +59,7 @@ if (initialOrders.some(o => o.id === "ORD-101" || o.id === "ORD-102")) {
 
 
 // ==============================================================================
-// کانال‌های پیش‌فرض و رسمی مجموعه اَوِکس‌راد (Official Production Channels)
+// کانال‌های پیش‌فرض و رسمی مجموعه اَوِکس‌راد (فقط برای پنل مدیریت ارشد)
 // ==============================================================================
 const OFFICIAL_DEFAULT_CHANNELS = [
   {
@@ -69,8 +109,16 @@ const OFFICIAL_DEFAULT_CHANNELS = [
   }
 ];
 
-function ensureOfficialChannelsForAdmin() {
-  if (AppState.user && (AppState.user.role === "super_admin" || AppState.user.planId === "super_admin")) {
+function loadUserChannelsAndSetup(user) {
+  const isSuper = !!(user && (user.role === "super_admin" || user.planId === "super_admin"));
+  const key = getChannelStorageKey(user);
+  let loaded = [];
+  try {
+    loaded = JSON.parse(localStorage.getItem(key) || "[]");
+  } catch (e) { loaded = []; }
+  AppState.channels = filterCleanChannels(loaded, isSuper);
+
+  if (isSuper) {
     const existingIds = new Set(AppState.channels.map(c => c.id));
     let modified = false;
     OFFICIAL_DEFAULT_CHANNELS.forEach(defCh => {
@@ -80,12 +128,14 @@ function ensureOfficialChannelsForAdmin() {
       }
     });
     if (modified) {
-      localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
+      saveChannelsToStorage();
     }
-    if (!AppState.activeChannelId && AppState.channels.length > 0) {
-      AppState.activeChannelId = AppState.channels[0].id;
-    }
+  } else {
+    // برای مشتریان عادی در صورت خالی بودن، همه بخش‌ها قفل می‌مانند تا کانال خودشان را وصل کنند
+    saveChannelsToStorage();
   }
+
+  AppState.activeChannelId = AppState.channels.length > 0 ? AppState.channels[0].id : null;
 }
 
 const AppState = {
@@ -175,6 +225,7 @@ document.addEventListener("DOMContentLoaded", function() {
   renderClientsTable();
   renderScheduledPostsTable();
   checkChannelGatekeeper();
+  initAiStudioConfig();
 });
 
 function initAuth() {
@@ -440,13 +491,15 @@ function loginSuccess(user, notify = true) {
   const headerUser = document.getElementById("headerAdminUsername");
   if (headerUser) headerUser.textContent = user.fullName || user.username;
 
-  // مقداردهی کانال‌های رسمی برای ادمین
-  ensureOfficialChannelsForAdmin();
+  // بارگذاری کانال‌های اختصاصی کاربر (کانال‌های رسمی اَوِکس‌راد فقط برای پنل ادمین فعال است)
+  loadUserChannelsAndSetup(user);
 
   applyPlanRole(user.planId);
   updateQuotaDisplays();
   updateRealKpiDisplays();
   renderChannelButtons();
+  renderActiveChannelDetails();
+  checkChannelGatekeeper();
   switchTab("tabDashboard");
 
   if (notify) {
@@ -463,6 +516,8 @@ function handleLogout() {
   }
   localStorage.removeItem("AVEXRAD_AUTH_USER");
   AppState.user = null;
+  AppState.channels = [];
+  AppState.activeChannelId = null;
   document.getElementById("dashboardAppView").classList.add("hidden");
   document.getElementById("loginScreenView").classList.remove("hidden");
   document.getElementById("loginUsernameInput").value = "";
@@ -471,6 +526,7 @@ function handleLogout() {
 }
 
 function initUI() {
+  if (!AppState.user) return;
   applyPlanRole(AppState.user.planId);
   updateQuotaDisplays();
 }
@@ -993,7 +1049,7 @@ function saveCurrentChannelSettings() {
     ch.aiPersona = document.getElementById("channelAiPersona").value;
     ch.signature = document.getElementById("channelSignature").value;
     ch.forbiddenWords = document.getElementById("channelForbiddenWords").value;
-    localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
+    saveChannelsToStorage();
     addLiveLog(`تنظیمات لحن و امضای کانال ${ch.name} با موفقیت ذخیره شد.`, "success");
     alert("تنظیمات با موفقیت در سیستم اعمال گردید.");
   }
@@ -1010,7 +1066,7 @@ function deleteCurrentChannel() {
   if (confirm(`آیا از حذف اتصال کانال «${ch.name}» (${ch.platform}) اطمینان دارید؟ سهمیه آن بلافاصله آزاد خواهد شد.`)) {
     AppState.channels = AppState.channels.filter(c => c.id !== ch.id);
     AppState.activeChannelId = AppState.channels.length > 0 ? AppState.channels[0].id : null;
-    localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
+    saveChannelsToStorage();
     renderChannelButtons();
     renderActiveChannelDetails();
     checkChannelGatekeeper();
@@ -1224,7 +1280,7 @@ function submitSaveChannel() {
 
   AppState.channels.push(newChannel);
   AppState.activeChannelId = newChannel.id;
-  localStorage.setItem("AVEXRAD_CHANNELS", JSON.stringify(AppState.channels));
+  saveChannelsToStorage();
   renderChannelButtons();
   renderActiveChannelDetails();
   checkChannelGatekeeper();
@@ -1243,66 +1299,593 @@ function recheckCurrentChannelBot() {
 }
 
 // ==============================================================================
-// ۵. استودیو تولید محتوا و ابزارهای هوش مصنوعی
+// ۵. استودیو تولید محتوا و ابزارهای هوش مصنوعی واقعی (متصل به API)
 // ==============================================================================
-function generateAiDraftPost() {
-  const topic = document.getElementById("aiTopicInput").value.trim();
+AppState.lastGeneratedImageUrl = null;
+AppState.lastGeneratedVideoBlob = null;
+AppState.lastGeneratedVideoUrl = null;
+
+function initAiStudioConfig() {
+  const savedKey = localStorage.getItem("AVEXRAD_GEMINI_API_KEY") || "";
+  const keyInput = document.getElementById("geminiApiKeyInput");
+  if (keyInput && savedKey) {
+    keyInput.value = savedKey;
+  }
+  updateAiEngineBadge();
+}
+
+function updateAiEngineBadge() {
+  const badge = document.getElementById("aiEngineStatusBadge");
+  if (!badge) return;
+  const savedKey = localStorage.getItem("AVEXRAD_GEMINI_API_KEY") || "";
+  if (savedKey) {
+    badge.textContent = "متصل به Gemini API اختصاصی";
+    badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold";
+  } else {
+    badge.textContent = "متصل به Cloud AI رایگان";
+    badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold";
+  }
+}
+
+function saveGeminiApiKey() {
+  const keyInput = document.getElementById("geminiApiKeyInput");
+  if (!keyInput) return;
+  const val = keyInput.value.trim();
+  if (val) {
+    localStorage.setItem("AVEXRAD_GEMINI_API_KEY", val);
+    addLiveLog("کلید اختصاصی Gemini API با موفقیت ذخیره شد.", "success");
+    alert("✅ کلید Gemini API ذخیره شد. از این پس تولید محتوا با موتور اختصاصی گوگل انجام می‌شود.");
+  } else {
+    localStorage.removeItem("AVEXRAD_GEMINI_API_KEY");
+    addLiveLog("کلید Gemini پاک شد و سیستم به Cloud AI رایگان متصل گردید.", "info");
+    alert("کلید پاک شد. استودیو از موتور Cloud AI رایگان استفاده می‌کند.");
+  }
+  updateAiEngineBadge();
+}
+
+async function callRealTextAI(systemPrompt, userPrompt) {
+  const apiKey = (localStorage.getItem("AVEXRAD_GEMINI_API_KEY") || "").trim();
+
+  // ۱. اولویت اول: استفاده از Gemini API در صورت وجود کلید
+  if (apiKey) {
+    try {
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig: { temperature: 0.75 }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+        if (text) return text.trim();
+      }
+    } catch (e) {
+      console.warn("Gemini API fallback to Cloud AI:", e);
+    }
+  }
+
+  // ۲. موتور ابری بدون نیاز به کلید (Pollinations OpenAI-Compatible)
+  try {
+    const res = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        seed: Math.floor(Math.random() * 100000)
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if (content) return content.trim();
+    }
+  } catch (e) {
+    console.warn("Pollinations POST fallback to GET:", e);
+  }
+
+  // ۳. پشتیبان مستقیم GET
+  const combined = systemPrompt + "\n\nدرخواست کاربر: " + userPrompt;
+  const getRes = await fetch("https://text.pollinations.ai/" + encodeURIComponent(combined));
+  if (!getRes.ok) {
+    throw new Error("پاسخی از سرویس هوش مصنوعی دریافت نشد (کد " + getRes.status + ")");
+  }
+  return (await getRes.text()).trim();
+}
+
+async function generateAiDraftPost() {
+  const topicInput = document.getElementById("aiTopicInput");
   const output = document.getElementById("aiDraftOutput");
+  const toneSelect = document.getElementById("aiToneSelect");
+  const btn = document.getElementById("btnGenerateAiDraft");
+  const statusLabel = document.getElementById("aiDraftStatusLabel");
+
+  const topic = topicInput ? topicInput.value.trim() : "";
   if (!topic) {
-    alert("لطفاً موضوع را وارد نمایید.");
+    alert("لطفاً موضوع یا دستور تولید محتوا را وارد نمایید.");
+    if (topicInput) topicInput.focus();
     return;
   }
 
-  output.value = "در حال ارتباط با مدل هوش مصنوعی Gemini 2.0 Flash و اعتبارسنجی حقایق...";
+  const toneMap = {
+    professional: "رسمی، خبری و حرفه‌ای",
+    sales: "تبلیغاتی، متقاعدکننده و فروش‌محور با دعوت به اقدام (CTA)",
+    educational: "آموزشی، گام‌به‌گام و کاربردی",
+    analytical: "تحلیلی، دقیق و تخصصی",
+    friendly: "صمیمی، جذاب و تعاملی"
+  };
+  const toneDesc = toneMap[toneSelect ? toneSelect.value : "professional"] || "حرفه‌ای";
 
-  setTimeout(() => {
-    const nl = String.fromCharCode(10);
-    output.value = "📊 گزارش تحلیلی بازار | " + topic + nl + nl +
-      "طبق آخرین داده‌های استخراج‌شده، روند نوسانات در ساعات اخیر نشان‌دهنده تثبیت نسبی شاخص‌هاست. کارشناسان معتقدند با توجه به سیگنال‌های بین‌المللی، حجم معاملات در محدوده امن قرار دارد." + nl + nl +
-      "▫️ نرخ بازگشایی: تثبیت در کانال حمایتی" + nl +
-      "▫️ پیش‌بینی کوتاه‌مدت: نوسان در دامنه ۱.۲ درصدی" + nl + nl +
-      "⚡️ تحلیل اختصاصی آژانس هوشمند اَوِکس‌راد" + nl +
-      "🆔 @avexrad_channel";
-    addLiveLog(`پیش‌نویس پست با هوش مصنوعی برای موضوع «${topic}» ایجاد شد.`, "success");
-  }, 900);
+  const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
+  const channelName = ch ? ch.name : "کانال شما";
+  const channelPersona = (ch && ch.aiPersona) ? ch.aiPersona : "حرفه‌ای و قابل اعتماد";
+  const forbidden = (ch && ch.forbiddenWords) ? ch.forbiddenWords : "";
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>در حال تولید...</span>`;
+  }
+  if (statusLabel) {
+    statusLabel.innerHTML = `<span class="text-amber-400">در حال اتصال به API هوش مصنوعی...</span>`;
+  }
+  if (output) {
+    output.value = "⏳ در حال پردازش موضوع و نگارش محتوای اختصاصی با هوش مصنوعی...";
+  }
+
+  const systemPrompt = [
+    "تو یک نویسنده و استراتژیست حرفه‌ای تولید محتوا برای کانال‌های تلگرام، بله و ایتا به زبان فارسی هستی.",
+    "نام کانال: " + channelName,
+    "شخصیت برند: " + channelPersona,
+    "لحن درخواستی: " + toneDesc,
+    forbidden ? ("کلمات ممنوعه که هرگز نباید استفاده شوند: " + forbidden) : "",
+    "قوانین خروجی:",
+    "1. فقط و فقط متن نهایی پست را به فارسی روان، جذاب و دقیق بر اساس موضوع کاربر بنویس.",
+    "2. از ایموجی‌های مرتبط و پاراگراف‌بندی تمیز برای خوانایی بالا استفاده کن.",
+    "3. در انتهای پست ۳ تا ۵ هشتگ فارسی مرتبط قرار بده.",
+    "4. هیچ توضیح اضافه‌ای قبل یا بعد از پست ننویس."
+  ].filter(Boolean).join("\n");
+
+  try {
+    const generatedText = await callRealTextAI(systemPrompt, "موضوع پست: " + topic);
+    if (output) output.value = generatedText;
+    if (statusLabel) {
+      statusLabel.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i><span>تولیدشده با هوش مصنوعی زنده</span>`;
+    }
+    addLiveLog(`متن اختصاصی با AI برای موضوع «${topic}» تولید شد.`, "success");
+  } catch (err) {
+    if (output) output.value = "";
+    if (statusLabel) {
+      statusLabel.innerHTML = `<span class="text-rose-400">خطا در ارتباط با API هوش مصنوعی</span>`;
+    }
+    addLiveLog(`خطا در تولید متن AI: ${err.message}`, "error");
+    alert("خطا در ارتباط با موتور هوش مصنوعی: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>تولید متن با AI</span>`;
+    }
+    if (window.lucide) lucide.createIcons();
+  }
 }
 
-function renderSampleBanner() {
+async function renderSampleBanner() {
   const container = document.getElementById("bannerCanvasContainer");
-  const style = document.getElementById("bannerStyleSelector").value;
-  
+  const styleEl = document.getElementById("bannerStyleSelector");
+  const promptInput = document.getElementById("aiImagePromptInput");
+  const topicInput = document.getElementById("aiTopicInput");
+  const btn = document.getElementById("btnGenerateAiImage");
+  const actionsBar = document.getElementById("aiImageActionsBar");
+
+  let rawPrompt = (promptInput && promptInput.value.trim()) || (topicInput && topicInput.value.trim()) || "";
+  if (!rawPrompt) {
+    alert("لطفاً توضیح تصویر دلخواه خود را وارد نمایید (یا در کادر موضوع بالا بنویسید).");
+    if (promptInput) promptInput.focus();
+    return;
+  }
+
+  const styleMap = {
+    realistic: "photorealistic, ultra detailed, 8k DSLR photography, natural studio lighting",
+    modern_3d: "modern 3D octane render, sleek futuristic aesthetic, soft volumetric lighting, ultra sharp",
+    cyber_neon: "futuristic digital art, cyberpunk neon cyan and purple lighting, high contrast, sleek technology",
+    minimalist: "clean minimalist graphic design, flat vector illustration, modern composition, balanced colors",
+    cinematic: "cinematic movie still, dramatic lighting, rich color grading, shallow depth of field, 8k"
+  };
+  const styleKeywords = styleMap[styleEl ? styleEl.value : "realistic"] || styleMap.realistic;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span><span>در حال خلق تصویر...</span>`;
+  }
+  if (actionsBar) actionsBar.classList.add("hidden");
+
   container.innerHTML = `
-    <div class="absolute inset-0 bg-gradient-to-tr from-slate-950 via-purple-950 to-slate-900 flex flex-col justify-between p-4 border border-cyan-500/40">
-      <div class="flex items-center justify-between border-b border-white/10 pb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded bg-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center">AR</div>
-          <span class="font-bold text-xs text-white">AVEX RAD MARKET</span>
-        </div>
-        <span class="text-[10px] text-cyan-300 font-mono">LIVE RATES</span>
-      </div>
-      <div class="space-y-1.5 text-center">
-        <div class="text-xs text-slate-400">انس جهانی طلا: $2,684.50</div>
-        <div class="text-base font-black text-amber-300 persian-nums">طلای ۱۸ عیار: ۴,۴۵۰,۰۰۰ تومان</div>
-        <div class="text-[10px] text-emerald-400">+۰.۸۵٪ صعودی</div>
-      </div>
-      <div class="text-[10px] text-slate-500 text-left font-mono">avexrad.ir</div>
+    <div class="z-10 text-center space-y-2 p-4">
+      <div class="w-10 h-10 mx-auto border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+      <div class="text-xs text-cyan-300 font-bold">در حال تبدیل ایده و تصویرسازی با AI...</div>
+      <div class="text-[10px] text-slate-400">لطفاً چند ثانیه صبر کنید</div>
     </div>
   `;
-  addLiveLog("قالب گرافیکی پوستر با نرخ زنده با موفقیت رندر شد.", "info");
+
+  try {
+    // ترجمه و غنی‌سازی پرامپت فارسی به انگلیسی برای بالاترین کیفیت تصویرسازی
+    let englishPrompt = rawPrompt;
+    try {
+      englishPrompt = await callRealTextAI(
+        "You are an expert AI image prompt translator. Translate the user's image description into a concise, vivid English prompt (max 35 words) suitable for image generation. Output ONLY the English prompt, nothing else.",
+        rawPrompt
+      );
+    } catch (e) {
+      englishPrompt = rawPrompt;
+    }
+
+    const fullPrompt = englishPrompt.replace(/[\r\n]+/g, " ").trim() + ", " + styleKeywords;
+    const seed = Math.floor(Math.random() * 1000000);
+    const imageUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(fullPrompt) + "?width=1024&height=768&nologo=true&seed=" + seed;
+
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      const timer = setTimeout(() => reject(new Error("زمان پاسخ تصویرسازی به پایان رسید.")), 30000);
+      img.onload = () => {
+        clearTimeout(timer);
+        resolve(img);
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        reject(new Error("خطا در دریافت تصویر از سرور هوش مصنوعی."));
+      };
+      img.src = imageUrl;
+    });
+
+    AppState.lastGeneratedImageUrl = imageUrl;
+    const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
+    const watermark = ch ? (ch.target || ch.name) : "@avexrad_channel";
+
+    container.innerHTML = `
+      <img id="aiGeneratedImageEl" src="${imageUrl}" crossorigin="anonymous" alt="AI Generated" class="w-full h-full object-cover rounded-xl">
+      <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-slate-950/75 backdrop-blur-sm border border-white/10 text-[10px] text-cyan-300 font-mono ltr">
+        ${watermark}
+      </div>
+    `;
+    if (actionsBar) actionsBar.classList.remove("hidden");
+    addLiveLog(`تصویر اختصاصی با هوش مصنوعی برای «${rawPrompt}» ساخته شد.`, "success");
+  } catch (err) {
+    container.innerHTML = `
+      <div class="z-10 text-center space-y-2 p-4">
+        <div class="text-xs text-rose-400 font-bold">❌ ${err.message}</div>
+        <div class="text-[10px] text-slate-400">لطفاً مجدداً دکمه تولید تصویر را بزنید.</div>
+      </div>
+    `;
+    addLiveLog(`خطا در تصویرسازی AI: ${err.message}`, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="wand-2" class="w-3.5 h-3.5"></i><span>تولید تصویر واقعی با AI</span>`;
+    }
+    if (window.lucide) lucide.createIcons();
+  }
 }
 
-function triggerVideoCreator() {
+async function downloadGeneratedImage() {
+  if (!AppState.lastGeneratedImageUrl) return;
+  try {
+    const res = await fetch(AppState.lastGeneratedImageUrl);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "avexrad_ai_image_" + Date.now() + ".jpg";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    window.open(AppState.lastGeneratedImageUrl, "_blank");
+  }
+}
+
+async function publishImageToChannel() {
+  if (!AppState.lastGeneratedImageUrl) {
+    alert("ابتدا یک تصویر تولید کنید.");
+    return;
+  }
+  const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
+  if (!ch || ch.platform !== "telegram" || !ch.token || !ch.target) {
+    alert("برای ارسال مستقیم تصویر، یک کانال تلگرامی فعال انتخاب کنید.");
+    return;
+  }
+  let rawToken = ch.token.startsWith("ENC::") ? ch.token.replace("ENC::", "") : ch.token;
+  const caption = (document.getElementById("aiDraftOutput") && document.getElementById("aiDraftOutput").value.trim()) || (document.getElementById("aiImagePromptInput") && document.getElementById("aiImagePromptInput").value.trim()) || "";
+  const fullCaption = (caption ? caption + "\n\n" : "") + (ch.signature || "");
+
+  addLiveLog(`در حال ارسال تصویر تولیدشده به ${ch.target}...`, "info");
+  try {
+    const res = await fetch("https://api.telegram.org/bot" + rawToken + "/sendPhoto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: ch.target,
+        photo: AppState.lastGeneratedImageUrl,
+        caption: fullCaption.substring(0, 1020)
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      addLiveLog(`✅ تصویر با موفقیت در کانال «${ch.name}» منتشر شد.`, "success");
+      alert("✅ تصویر با موفقیت به کانال تلگرام ارسال شد!");
+    } else {
+      addLiveLog(`❌ خطای تلگرام: ${data.description}`, "error");
+      alert("خطای تلگرام: " + data.description);
+    }
+  } catch (err) {
+    alert("خطا در ارسال تصویر: " + err.message);
+  }
+}
+
+function attachImageToDraft() {
+  const topic = document.getElementById("aiTopicInput") ? document.getElementById("aiTopicInput").value.trim() : "";
+  const imgPrompt = document.getElementById("aiImagePromptInput");
+  if (imgPrompt && topic && !imgPrompt.value.trim()) {
+    imgPrompt.value = topic;
+  }
+  renderSampleBanner();
+}
+
+function attachVideoToDraft() {
+  const topic = document.getElementById("aiTopicInput") ? document.getElementById("aiTopicInput").value.trim() : "";
+  const vidPrompt = document.getElementById("aiVideoPromptInput");
+  if (vidPrompt && topic && !vidPrompt.value.trim()) {
+    vidPrompt.value = topic;
+  }
+  triggerVideoCreator();
+}
+
+async function triggerVideoCreator() {
   const isSuper = (AppState.user && (AppState.user.planId === "super_admin" || AppState.user.role === "super_admin"));
   const p = AppState.currentPlan || (window.AVEXRAD_PLANS ? AVEXRAD_PLANS.basic : { dailyVideoSecLimit: 0 });
   if ((p.dailyVideoSecLimit || 0) === 0 && !isSuper) {
     alert("تولید ویدیو کوتاه در پلن شما قفل است. لطفاً به «پلن حرفه‌ای VIP» ارتقا دهید.");
     return;
   }
-  addLiveLog("در حال ترکیب هوشمند تصویر، متن زیرنویس پویا و تولید اسلایدشوی ۴۵ ثانیه‌ای...", "info");
-  setTimeout(() => {
-    addLiveLog("ریلز ویدیویی ۴۵ ثانیه‌ای سبک با موفقیت رندر شد و در صف انتشار قرار گرفت.", "success");
-    alert("ویدیو آماده شد و طبق سهمیه ۶۰ ثانیه روزانه کسر گردید.");
-  }, 1200);
+
+  const videoPromptInput = document.getElementById("aiVideoPromptInput");
+  const topicInput = document.getElementById("aiTopicInput");
+  const formatSelect = document.getElementById("aiVideoFormatSelect");
+  const titleEl = document.getElementById("videoStatusTitle");
+  const descEl = document.getElementById("videoStatusDesc");
+  const btn = document.getElementById("btnGenerateVideo");
+  const previewContainer = document.getElementById("videoPreviewContainer");
+  const player = document.getElementById("generatedVideoPlayer");
+
+  const titleText = (videoPromptInput && videoPromptInput.value.trim()) || (topicInput && topicInput.value.trim()) || "ویدیوی هوشمند اَوِکس‌راد";
+  const isVertical = !formatSelect || formatSelect.value === "9:16";
+  const width = isVertical ? 540 : 960;
+  const height = isVertical ? 960 : 540;
+
+  if (typeof MediaRecorder === "undefined") {
+    alert("مرورگر شما از موتور رندر ویدیو پشتیبانی نمی‌کند.");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "در حال رندر...";
+  }
+  if (titleEl) titleEl.textContent = "در حال رندر فریم‌های ویدیو...";
+  if (descEl) descEl.textContent = "لطفاً ۵ ثانیه منتظر بمانید تا فایل ویدیویی آماده شود";
+  addLiveLog(`شروع رندر ویدیوی واقعی برای «${titleText}»...`, "info");
+
+  try {
+    // بارگذاری تصویر تولیدشده در صورت وجود برای پس‌زمینه ویدیو
+    let bgImg = null;
+    if (AppState.lastGeneratedImageUrl) {
+      try {
+        bgImg = await new Promise((resolve) => {
+          const im = new Image();
+          im.crossOrigin = "anonymous";
+          im.onload = () => resolve(im);
+          im.onerror = () => resolve(null);
+          im.src = AppState.lastGeneratedImageUrl;
+        });
+      } catch (e) { bgImg = null; }
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    const stream = canvas.captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    const recorder = new MediaRecorder(stream, { mimeType: mimeType });
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+    const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
+    const brandName = ch ? ch.name : "AVEX RAD AI";
+
+    const durationMs = 4500;
+    const startTime = performance.now();
+
+    const recordingDone = new Promise((resolve) => {
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/webm" });
+        resolve(blob);
+      };
+    });
+
+    recorder.start();
+
+    function drawFrame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+
+      // پس‌زمینه
+      ctx.fillStyle = "#020617";
+      ctx.fillRect(0, 0, width, height);
+
+      if (bgImg) {
+        const scale = 1 + progress * 0.12;
+        const imgAspect = bgImg.width / bgImg.height;
+        const canvasAspect = width / height;
+        let dw, dh;
+        if (imgAspect > canvasAspect) {
+          dh = height * scale;
+          dw = dh * imgAspect;
+        } else {
+          dw = width * scale;
+          dh = dw / imgAspect;
+        }
+        ctx.drawImage(bgImg, (width - dw) / 2, (height - dh) / 2, dw, dh);
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, "rgba(2, 6, 23, 0.45)");
+        grad.addColorStop(0.5, "rgba(2, 6, 23, 0.65)");
+        grad.addColorStop(1, "rgba(2, 6, 23, 0.92)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, "#0f172a");
+        grad.addColorStop(0.5, "#3b0764");
+        grad.addColorStop(1, "#083344");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // ذرات نورانی متحرک
+        for (let i = 0; i < 14; i++) {
+          const px = ((i * 97 + progress * 180) % width);
+          const py = ((i * 131 + Math.sin(progress * Math.PI * 2 + i) * 60) % height);
+          ctx.beginPath();
+          ctx.arc(px, py, 3 + (i % 4), 0, Math.PI * 2);
+          ctx.fillStyle = i % 2 === 0 ? "rgba(34, 211, 238, 0.25)" : "rgba(168, 85, 247, 0.25)";
+          ctx.fill();
+        }
+      }
+
+      // نشان برند بالا
+      ctx.fillStyle = "rgba(15, 23, 42, 0.78)";
+      ctx.fillRect(24, 24, width - 48, 44);
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.5)";
+      ctx.strokeRect(24, 24, width - 48, 44);
+      ctx.fillStyle = "#22d3ee";
+      ctx.font = "bold 18px Vazirmatn, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(brandName, width / 2, 53);
+
+      // عنوان اصلی متحرک
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, progress * 3);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 28px Vazirmatn, sans-serif";
+      ctx.textAlign = "center";
+      const words = titleText.split(" ");
+      let line = "";
+      let y = height * 0.48;
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + " ";
+        if (ctx.measureText(testLine).width > width - 80 && n > 0) {
+          ctx.fillText(line.trim(), width / 2, y);
+          line = words[n] + " ";
+          y += 42;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line.trim(), width / 2, y);
+      ctx.restore();
+
+      // نوار پیشرفت پایین
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillRect(36, height - 34, width - 72, 6);
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillRect(36, height - 34, (width - 72) * progress, 6);
+
+      if (elapsed < durationMs) {
+        requestAnimationFrame(drawFrame);
+      } else {
+        recorder.stop();
+      }
+    }
+
+    requestAnimationFrame(drawFrame);
+    const videoBlob = await recordingDone;
+
+    if (AppState.lastGeneratedVideoUrl) {
+      URL.revokeObjectURL(AppState.lastGeneratedVideoUrl);
+    }
+    AppState.lastGeneratedVideoBlob = videoBlob;
+    AppState.lastGeneratedVideoUrl = URL.createObjectURL(videoBlob);
+
+    if (player) player.src = AppState.lastGeneratedVideoUrl;
+    if (previewContainer) previewContainer.classList.remove("hidden");
+    if (titleEl) titleEl.textContent = "✅ ویدیو آماده پخش و دانلود است";
+    if (descEl) descEl.textContent = `حجم فایل: ${Math.round(videoBlob.size / 1024)} کیلوبایت | فرمت WebM`;
+    addLiveLog(`ویدیوی واقعی برای «${titleText}» با موفقیت رندر شد.`, "success");
+  } catch (err) {
+    if (titleEl) titleEl.textContent = "خطا در رندر ویدیو";
+    addLiveLog(`خطا در ساخت ویدیو: ${err.message}`, "error");
+    alert("خطا در ساخت ویدیو: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "ساخت ویدیو واقعی";
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function downloadGeneratedVideo() {
+  if (!AppState.lastGeneratedVideoUrl) return;
+  const a = document.createElement("a");
+  a.href = AppState.lastGeneratedVideoUrl;
+  a.download = "avexrad_reels_" + Date.now() + ".webm";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function publishVideoToChannel() {
+  if (!AppState.lastGeneratedVideoBlob) {
+    alert("ابتدا یک ویدیو بسازید.");
+    return;
+  }
+  const ch = AppState.channels.find(c => c.id === AppState.activeChannelId);
+  if (!ch || ch.platform !== "telegram" || !ch.token || !ch.target) {
+    alert("برای ارسال مستقیم ویدیو، یک کانال تلگرامی فعال انتخاب کنید.");
+    return;
+  }
+  let rawToken = ch.token.startsWith("ENC::") ? ch.token.replace("ENC::", "") : ch.token;
+  const caption = (document.getElementById("aiDraftOutput") && document.getElementById("aiDraftOutput").value.trim()) || "";
+  const formData = new FormData();
+  formData.append("chat_id", ch.target);
+  formData.append("video", AppState.lastGeneratedVideoBlob, "avexrad_reels.webm");
+  if (caption) formData.append("caption", caption.substring(0, 1020));
+
+  addLiveLog(`در حال آپلود و ارسال ویدیو به ${ch.target}...`, "info");
+  try {
+    const res = await fetch("https://api.telegram.org/bot" + rawToken + "/sendVideo", {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    if (data.ok) {
+      addLiveLog(`✅ ویدیو با موفقیت در کانال «${ch.name}» منتشر شد.`, "success");
+      alert("✅ ویدیو با موفقیت به کانال تلگرام ارسال شد!");
+    } else {
+      addLiveLog(`❌ خطای تلگرام: ${data.description}`, "error");
+      alert("خطای تلگرام: " + data.description);
+    }
+  } catch (err) {
+    alert("خطا در ارسال ویدیو: " + err.message);
+  }
 }
 
 async function publishApprovedPost() {
@@ -1641,7 +2224,10 @@ function impersonateClient(clientId) {
     isImpersonated: true
   };
 
+  loadUserChannelsAndSetup(AppState.user);
   applyPlanRole(client.planId);
+  renderActiveChannelDetails();
+  updateRealKpiDisplays();
 
   const banner = document.getElementById("impersonationBanner");
   const textEl = document.getElementById("impersonationTargetName");
@@ -1671,8 +2257,10 @@ function stopImpersonating() {
   const banner = document.getElementById("impersonationBanner");
   if (banner) banner.classList.add("hidden");
 
+  loadUserChannelsAndSetup(AppState.user);
   applyPlanRole("super_admin");
-  ensureOfficialChannelsForAdmin();
+  renderActiveChannelDetails();
+  updateRealKpiDisplays();
   renderChannelButtons();
   switchTab("tabAdminOrders");
   addLiveLog("از حالت بازرسی خارج شدید و به پنل فرماندهی ارشد بازگشتید.", "info");
