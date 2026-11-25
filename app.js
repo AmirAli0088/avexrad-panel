@@ -408,8 +408,20 @@ window.addEventListener("online", function() {
 
 function togglePasswordVisibility(inputId) {
   const el = document.getElementById(inputId);
-  if (el) {
-    el.type = el.type === "password" ? "text" : "password";
+  if (!el) return;
+  const isPass = (el.type === "password");
+  el.type = isPass ? "text" : "password";
+
+  const textEl = document.getElementById("loginPassBtnText");
+  const iconEl = document.getElementById("loginPassEyeIcon");
+  if (textEl) {
+    textEl.textContent = isPass ? "مخفی‌سازی" : "نمایش رمز";
+  }
+  if (iconEl) {
+    iconEl.setAttribute("data-lucide", isPass ? "eye-off" : "eye");
+    if (window.lucide) {
+      try { lucide.createIcons(); } catch(e) {}
+    }
   }
 }
 
