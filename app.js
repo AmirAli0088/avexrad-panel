@@ -197,102 +197,189 @@ function showLoginScreen() {
   if (window.lucide) lucide.createIcons();
 }
 
-function handleLoginSubmit(event) {
-  event.preventDefault();
-  const username = document.getElementById("loginUsernameInput").value.trim();
-  const password = document.getElementById("loginPasswordInput").value.trim();
-  const cardBox = document.getElementById("loginCardBox");
-  const btnSubmit = document.getElementById("btnLoginSubmit");
-  const btnSpinner = document.getElementById("btnLoginSpinner");
-  const btnIcon = document.getElementById("btnLoginIcon");
-  const btnText = document.getElementById("btnLoginText");
-
-  const errBox = document.getElementById("loginErrorBox");
-  if (errBox) errBox.classList.add("hidden");
-  if (cardBox) cardBox.classList.remove("shake-box");
-
-  // ۱. بررسی اتصال اینترنت
-  if (!navigator.onLine) {
-    showLoginError("اتصال اینترنت شما قطع است. لطفاً ارتباط شبکه خود را بررسی نمایید.");
-    return;
+function clearLoginInputErrors() {
+  const uInput = document.getElementById("loginUsernameInput");
+  const pInput = document.getElementById("loginPasswordInput");
+  if (uInput) {
+    uInput.classList.remove("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+    uInput.classList.add("border-white/10");
   }
-
-  // ۲. اعتبارسنجی فیلدهای خالی
-  if (!username) {
-    showLoginError("لطفاً نام کاربری اختصاصی خود را وارد نمایید.");
-    document.getElementById("loginUsernameInput").focus();
-    return;
+  if (pInput) {
+    pInput.classList.remove("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+    pInput.classList.add("border-white/10");
   }
-  if (!password) {
-    showLoginError("لطفاً رمز عبور حساب خود را وارد نمایید.");
-    document.getElementById("loginPasswordInput").focus();
-    return;
-  }
-
-  // انیمیشن لودینگ و غیرفعال‌سازی دکمه برای جلوگیری از دوبار کلیک
-  if (btnSpinner) btnSpinner.classList.remove("hidden");
-  if (btnIcon) btnIcon.classList.add("hidden");
-  if (btnText) btnText.textContent = "در حال اعتبارسنجی...";
-  if (btnSubmit) btnSubmit.disabled = true;
-
-  setTimeout(() => {
-    // بازگردانی دکمه ورود
-    if (btnSpinner) btnSpinner.classList.add("hidden");
-    if (btnIcon) btnIcon.classList.remove("hidden");
-    if (btnText) btnText.textContent = "ورود به پنل کاربری";
-    if (btnSubmit) btnSubmit.disabled = false;
-
-    // ۳. بررسی حساب‌های مدیران ارشد (Super Admins)
-    if (username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad") {
-      const validPass = AppState.adminPasswords[username] || (username === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
-      if (password === validPass) {
-        const adminUser = {
-          username: username,
-          fullName: username === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
-          role: "super_admin",
-          planId: "super_admin"
-        };
-        loginSuccess(adminUser, true);
-        return;
-      }
-    }
-
-    // ۴. بررسی حساب‌های مشتریان ثبت‌شده
-    const matchedClient = REGISTERED_CLIENT_ACCOUNTS.find(c => c.username.toLowerCase() === username.toLowerCase() && c.password === password);
-    if (matchedClient) {
-      const clientUser = {
-        username: matchedClient.username,
-        fullName: matchedClient.fullName,
-        role: "client",
-        planId: matchedClient.planId
-      };
-      loginSuccess(clientUser, true);
-      return;
-    }
-
-    // ۵. خطا در صورت عدم تطابق اطلاعات
-    showLoginError("نام کاربری یا رمز عبور اشتباه است.");
-  }, 400);
 }
 
-function showLoginError(msg) {
+function showLoginError(msg, targetField = null) {
+  clearLoginInputErrors();
   const errBox = document.getElementById("loginErrorBox");
   const errMsg = document.getElementById("loginErrorMessage");
   const cardBox = document.getElementById("loginCardBox");
 
   if (errMsg) errMsg.textContent = msg;
-  if (errBox) errBox.classList.remove("hidden");
+  if (errBox) {
+    errBox.classList.remove("hidden");
+    try {
+      errBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch(e) {}
+  }
+
+  if (targetField === "username") {
+    const el = document.getElementById("loginUsernameInput");
+    if (el) {
+      el.classList.remove("border-white/10");
+      el.classList.add("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+      el.focus();
+    }
+  } else if (targetField === "password") {
+    const el = document.getElementById("loginPasswordInput");
+    if (el) {
+      el.classList.remove("border-white/10");
+      el.classList.add("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+      el.focus();
+    }
+  } else if (targetField === "both") {
+    const u = document.getElementById("loginUsernameInput");
+    const p = document.getElementById("loginPasswordInput");
+    if (u) {
+      u.classList.remove("border-white/10");
+      u.classList.add("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+    }
+    if (p) {
+      p.classList.remove("border-white/10");
+      p.classList.add("border-rose-500", "shadow-sm", "shadow-rose-500/30");
+    }
+  }
 
   if (cardBox) {
     cardBox.classList.remove("shake-box");
-    void cardBox.offsetWidth; // ری‌فلو برای اجرای مجدد انیمیشن
+    void cardBox.offsetWidth; // ری‌فلو برای انیمیشن
     cardBox.classList.add("shake-box");
     setTimeout(() => {
       cardBox.classList.remove("shake-box");
     }, 500);
   }
 
-  if (window.lucide) lucide.createIcons();
+  if (window.lucide) {
+    try { lucide.createIcons(); } catch(e) {}
+  }
+}
+
+function handleLoginSubmit(event) {
+  if (event) {
+    try {
+      event.preventDefault();
+      event.stopPropagation();
+    } catch(e) {}
+  }
+
+  clearLoginInputErrors();
+  const errBox = document.getElementById("loginErrorBox");
+  if (errBox) errBox.classList.add("hidden");
+
+  const usernameInput = document.getElementById("loginUsernameInput");
+  const passwordInput = document.getElementById("loginPasswordInput");
+  const username = (usernameInput ? usernameInput.value : "").trim();
+  const password = (passwordInput ? passwordInput.value : "").trim();
+
+  const cardBox = document.getElementById("loginCardBox");
+  const btnSubmit = document.getElementById("btnLoginSubmit");
+  const btnSpinner = document.getElementById("btnLoginSpinner");
+  const btnIcon = document.getElementById("btnLoginIcon");
+  const btnText = document.getElementById("btnLoginText");
+
+  // ۱. بررسی اتصال اینترنت
+  if (!navigator.onLine) {
+    showLoginError("اتصال اینترنت شما قطع است. لطفاً ارتباط شبکه خود را بررسی نمایید.");
+    return false;
+  }
+
+  // ۲. اعتبارسنجی فیلدهای خالی
+  if (!username && !password) {
+    showLoginError("لطفاً نام کاربری و رمز عبور حساب خود را وارد نمایید.", "both");
+    return false;
+  }
+  if (!username) {
+    showLoginError("لطفاً نام کاربری اختصاصی خود را وارد نمایید.", "username");
+    return false;
+  }
+  if (!password) {
+    showLoginError("لطفاً رمز عبور حساب خود را وارد نمایید.", "password");
+    return false;
+  }
+
+  // انیمیشن لودینگ و غیرفعال‌سازی دکمه برای جلوگیری از دوباره کلیک
+  if (btnSpinner) btnSpinner.classList.remove("hidden");
+  if (btnIcon) btnIcon.classList.add("hidden");
+  if (btnText) btnText.textContent = "در حال اعتبارسنجی...";
+  if (btnSubmit) btnSubmit.disabled = true;
+
+  setTimeout(() => {
+    try {
+      // بازگردانی دکمه ورود
+      if (btnSpinner) btnSpinner.classList.add("hidden");
+      if (btnIcon) btnIcon.classList.remove("hidden");
+      if (btnText) btnText.textContent = "ورود به پنل کاربری";
+      if (btnSubmit) btnSubmit.disabled = false;
+
+      // ۳. بررسی حساب‌های مدیران ارشد (Super Admins)
+      const isSuperAdminUser = (username.toLowerCase() === "amirali_avexrad" || username.toLowerCase() === "amirahdi_avexrad" || username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad");
+      if (isSuperAdminUser) {
+        const canonicalUsername = (username.toLowerCase() === "amirali_avexrad") ? "AmirAli_AvexRad" : "AmirMahdi_AvexRad";
+        const validPass = AppState.adminPasswords[canonicalUsername] || (canonicalUsername === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
+        if (password === validPass) {
+          const adminUser = {
+            username: canonicalUsername,
+            fullName: canonicalUsername === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
+            role: "super_admin",
+            planId: "super_admin"
+          };
+          loginSuccess(adminUser, true);
+          return;
+        } else {
+          showLoginError(`رمز عبور وارد شده برای مدیر ارشد (${canonicalUsername}) اشتباه است.`, "password");
+          return;
+        }
+      }
+
+      // ۴. بررسی حساب‌های مشتریان ثبت‌شده
+      const regClients = JSON.parse(localStorage.getItem("AVEXRAD_REGISTERED_CLIENTS") || "[]");
+      const clientAccounts = Array.isArray(regClients) ? regClients : [];
+      const appClients = Array.isArray(AppState.clients) ? AppState.clients : [];
+      
+      const targetClient = clientAccounts.find(c => c && typeof c.username === "string" && c.username.toLowerCase() === username.toLowerCase()) ||
+                           appClients.find(c => c && typeof c.username === "string" && c.username.toLowerCase() === username.toLowerCase());
+
+      if (targetClient) {
+        if (targetClient.password === password) {
+          const clientUser = {
+            username: targetClient.username,
+            fullName: targetClient.fullName || targetClient.customerName || targetClient.username,
+            role: "client",
+            planId: targetClient.planId || "basic"
+          };
+          loginSuccess(clientUser, true);
+          return;
+        } else {
+          showLoginError(`رمز عبور وارد شده برای حساب «@${targetClient.username}» اشتباه است.`, "password");
+          return;
+        }
+      }
+
+      // ۵. اگر نام کاربری اصلاً یافت نشد
+      showLoginError(`حساب کاربری با نام «${username}» یافت نشد. لطفاً اطلاعات خود را بررسی نمایید.`, "username");
+
+    } catch(err) {
+      console.error("Login Handler Error:", err);
+      if (btnSpinner) btnSpinner.classList.add("hidden");
+      if (btnIcon) btnIcon.classList.remove("hidden");
+      if (btnText) btnText.textContent = "ورود به پنل کاربری";
+      if (btnSubmit) btnSubmit.disabled = false;
+      showLoginError("خطا در پردازش اطلاعات ورود: " + (err.message || "لطفاً مجدداً تلاش کنید."));
+    }
+  }, 400);
+
+  return false;
 }
 
 // نظارت بر وضعیت شبکه اینترنت (Offline / Online Toast)
