@@ -413,15 +413,14 @@ function togglePasswordVisibility(inputId) {
   el.type = isPass ? "text" : "password";
 
   const textEl = document.getElementById("loginPassBtnText");
-  const iconEl = document.getElementById("loginPassEyeIcon");
+  const iconWrap = document.getElementById("loginPassIconWrap");
   if (textEl) {
     textEl.textContent = isPass ? "مخفی‌سازی" : "نمایش رمز";
   }
-  if (iconEl) {
-    iconEl.setAttribute("data-lucide", isPass ? "eye-off" : "eye");
-    if (window.lucide) {
-      try { lucide.createIcons(); } catch(e) {}
-    }
+  if (iconWrap) {
+    iconWrap.innerHTML = isPass
+      ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
   }
 }
 
@@ -525,8 +524,10 @@ function switchTab(tabId) {
 
 // تغییر نقش و سطح پلن (برای تست سریع یا تایید سوپر ادمین)
 function applyPlanRole(planId) {
-  AppState.user.planId = planId;
-  AppState.currentPlan = AVEXRAD_PLANS[planId] || AVEXRAD_PLANS.basic;
+  if (AppState.user) {
+    AppState.user.planId = planId;
+  }
+  AppState.currentPlan = (window.AVEXRAD_PLANS && AVEXRAD_PLANS[planId]) || (window.AVEXRAD_PLANS ? AVEXRAD_PLANS.basic : {});
   
   const isSuper = (planId === "super_admin");
   const banner = document.getElementById("superAdminBanner");
@@ -547,13 +548,13 @@ function applyPlanRole(planId) {
     if (navAdmin) navAdmin.classList.add("hidden");
     if (drawerAdmin) drawerAdmin.classList.add("hidden");
     if (badge) {
-      badge.textContent = AppState.currentPlan.name;
-      badge.className = `text-xs px-2 py-0.5 rounded-full ${AppState.currentPlan.badgeColor} font-semibold`;
+      badge.textContent = (AppState.currentPlan && AppState.currentPlan.name) || "پلن فعال";
+      badge.className = `text-xs px-2 py-0.5 rounded-full ${(AppState.currentPlan && AppState.currentPlan.badgeColor) || 'bg-slate-700 text-slate-200'} font-semibold`;
     }
   }
 
   // تب‌های مجاز برای هر پلن (داشبورد و راهنما همیشه برای همه باز است)
-  const allowedTabs = ["tabDashboard", ...(AppState.currentPlan.allowedNavTabs || ["tabChannels"])];
+  const allowedTabs = ["tabDashboard", ...((AppState.currentPlan && AppState.currentPlan.allowedNavTabs) || ["tabChannels"])];
   if (!allowedTabs.includes("tabHelp")) allowedTabs.push("tabHelp");
 
   const allTabs = [
@@ -605,7 +606,7 @@ function applyPlanRole(planId) {
 }
 
 function updateQuotaDisplays() {
-  const isSuper = (AppState.user.planId === "super_admin");
+  const isSuper = (AppState.user && (AppState.user.planId === "super_admin" || AppState.user.role === "super_admin"));
   const imgEl = document.getElementById("imageQuotaText");
   const vidEl = document.getElementById("videoQuotaText");
   const subEl = document.getElementById("subRemainingText");
@@ -615,11 +616,11 @@ function updateQuotaDisplays() {
     if (vidEl) vidEl.textContent = "نامحدود (ادمین ارشد)";
     if (subEl) subEl.textContent = "مادام‌العمر VIP";
   } else {
-    const p = AppState.currentPlan;
-    const imgRem = Math.max(0, p.dailyImageLimit - AppState.quotas.imagesUsed);
-    const vidRem = Math.max(0, p.dailyVideoSecLimit - AppState.quotas.videoSecUsed);
-    if (imgEl) imgEl.textContent = `${imgRem} از ${p.dailyImageLimit} باقیمانده`;
-    if (vidEl) vidEl.textContent = `${vidRem} از ${p.dailyVideoSecLimit} ثانیه`;
+    const p = AppState.currentPlan || (window.AVEXRAD_PLANS ? AVEXRAD_PLANS.basic : { dailyImageLimit: 0, dailyVideoSecLimit: 0 });
+    const imgRem = Math.max(0, (p.dailyImageLimit || 0) - (AppState.quotas ? AppState.quotas.imagesUsed : 0));
+    const vidRem = Math.max(0, (p.dailyVideoSecLimit || 0) - (AppState.quotas ? AppState.quotas.videoSecUsed : 0));
+    if (imgEl) imgEl.textContent = `${imgRem} از ${p.dailyImageLimit || 0} باقیمانده`;
+    if (vidEl) vidEl.textContent = `${vidRem} از ${p.dailyVideoSecLimit || 0} ثانیه`;
     if (subEl) subEl.textContent = "۲۹ روز تا تمدید";
   }
 }
@@ -635,9 +636,9 @@ function renderChannelButtons() {
   // به‌روزرسانی برچسب سهمیه اتصالات کانال
   const quotaBadge = document.getElementById("channelQuotaBadge");
   if (quotaBadge) {
-    const isSuper = (AppState.user.planId === "super_admin");
-    const maxChannels = isSuper ? 9999 : AppState.currentPlan.maxChannels;
-    const currentCount = AppState.channels.length;
+    const isSuper = (AppState.user && (AppState.user.planId === "super_admin" || AppState.user.role === "super_admin"));
+    const maxChannels = isSuper ? 9999 : ((AppState.currentPlan && AppState.currentPlan.maxChannels) || 3);
+    const currentCount = (AppState.channels && AppState.channels.length) || 0;
     if (isSuper) {
       quotaBadge.textContent = `اتصالات فعال: ${currentCount} (نامحدود)`;
       quotaBadge.className = "text-xs px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/30 font-bold text-purple-300";
@@ -1291,7 +1292,9 @@ function renderSampleBanner() {
 }
 
 function triggerVideoCreator() {
-  if (AppState.currentPlan.dailyVideoSecLimit === 0 && AppState.user.planId !== "super_admin") {
+  const isSuper = (AppState.user && (AppState.user.planId === "super_admin" || AppState.user.role === "super_admin"));
+  const p = AppState.currentPlan || (window.AVEXRAD_PLANS ? AVEXRAD_PLANS.basic : { dailyVideoSecLimit: 0 });
+  if ((p.dailyVideoSecLimit || 0) === 0 && !isSuper) {
     alert("تولید ویدیو کوتاه در پلن شما قفل است. لطفاً به «پلن حرفه‌ای VIP» ارتقا دهید.");
     return;
   }
