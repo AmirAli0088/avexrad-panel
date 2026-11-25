@@ -34,7 +34,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
-    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین\n🌐 @avexrad_channel",
+    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین" + String.fromCharCode(10) + "🌐 @avexrad_channel",
     forbiddenWords: ""
   },
   {
@@ -49,7 +49,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
-    signature: "🚀 اَوِکس‌راد | سامانه هوشمند مدیریت رسانه\n🌐 ble.ir/avexrad_channel",
+    signature: "🚀 اَوِکس‌راد | سامانه هوشمند مدیریت رسانه" + String.fromCharCode(10) + "🌐 ble.ir/avexrad_channel",
     forbiddenWords: ""
   },
   {
@@ -64,7 +64,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
-    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین\n🌐 eitaa.com/avexrad_channel",
+    signature: "🚀 اَوِکس‌راد | هوش مصنوعی و اتوماسیون نوین" + String.fromCharCode(10) + "🌐 eitaa.com/avexrad_channel",
     forbiddenWords: ""
   }
 ];
