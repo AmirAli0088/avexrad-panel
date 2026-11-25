@@ -76,7 +76,10 @@
               <i data-lucide="key" class="w-3.5 h-3.5 text-purple-400"></i>
               <span>رمز عبور:</span>
             </span>
-            <button type="button" onclick="togglePasswordVisibility('loginPasswordInput')" class="text-[11px] text-slate-400 hover:text-cyan-400">نمایش</button>
+            <button type="button" onclick="togglePasswordVisibility('loginPasswordInput')" id="btnToggleLoginPass" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold transition flex items-center gap-1 cursor-pointer">
+              <i data-lucide="eye" id="loginPassEyeIcon" class="w-3.5 h-3.5"></i>
+              <span id="loginPassBtnText">نمایش رمز</span>
+            </button>
           </label>
           <input type="password" id="loginPasswordInput" oninput="clearLoginInputErrors()" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();handleLoginSubmit(event);}" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white ltr focus:outline-none focus:border-purple-400 transition" placeholder="••••••••">
         </div>
