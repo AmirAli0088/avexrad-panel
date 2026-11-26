@@ -97,6 +97,7 @@ const AVEXRAD_PLANS = {
     description: "دسترسی کامل و نامحدود به تمامی ماژول‌ها، مدیریت مشترکین و تایید سفارشات ربات فروش"
   }
 };
+window.AVEXRAD_PLANS = AVEXRAD_PLANS;
 
 // حساب‌های کاربری مدیران ارشد با دسترسی کامل و برابر
 const DEFAULT_SUPER_ADMINS = [
