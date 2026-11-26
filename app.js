@@ -70,7 +70,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     token: "9026405874:AAGtlrjjTfg7BY2bDWag9QR_jF9dRWgQGS4",
     botUsername: "@avexrad_channel_bot",
     link: "https://t.me/avexrad_channel",
-    membersCount: 120,
+    membersCount: null,
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
@@ -85,7 +85,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     token: "1444200829:k2lPWCiyhy3FVQ8NTtIfj95nsCBvi5_cPkQ",
     botUsername: "@avexrad_channel_bot",
     link: "https://ble.ir/avexrad_channel",
-    membersCount: 85,
+    membersCount: null,
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
@@ -100,7 +100,7 @@ const OFFICIAL_DEFAULT_CHANNELS = [
     token: "bot492011:6f1f3078-ce0f-4524-a418-e142bab4b322",
     botUsername: "avexrad_channel",
     link: "https://eitaa.com/avexrad_channel",
-    membersCount: 95,
+    membersCount: null,
     status: "active",
     isOfficial: true,
     aiPersona: "رسمی، پیشرو، مقتدر و الهام‌بخش اَوِکس‌راد",
@@ -178,12 +178,21 @@ const AppState = {
 const REGISTERED_CLIENT_ACCOUNTS = JSON.parse(localStorage.getItem("AVEXRAD_REGISTERED_CLIENTS") || "[]");
 
 function updateRealKpiDisplays() {
-  const totalMem = AppState.channels.reduce((sum, ch) => sum + (ch.membersCount || 0), 0);
+  const supportedChannels = (AppState.channels || []).filter(ch => typeof ch.membersCount === "number");
+  const totalMem = supportedChannels.reduce((sum, ch) => sum + ch.membersCount, 0);
   const memEl = document.getElementById("kpiTotalMembers");
-  if (memEl) memEl.textContent = totalMem.toLocaleString("fa-IR");
+  if (memEl) {
+    if ((AppState.channels || []).length === 0) {
+      memEl.textContent = "۰";
+    } else if (supportedChannels.length === 0) {
+      memEl.textContent = "نامشخص";
+    } else {
+      memEl.textContent = totalMem.toLocaleString("fa-IR");
+    }
+  }
 
   const growthEl = document.getElementById("kpiGrowth24h");
-  if (growthEl) growthEl.textContent = "۰ نفر";
+  if (growthEl) growthEl.textContent = "ثبت زنده فعال";
 
   const postEl = document.getElementById("kpiTotalAiPosts");
   if (postEl) postEl.textContent = "۰";
@@ -502,6 +511,7 @@ function loginSuccess(user, notify = true) {
   renderActiveChannelDetails();
   checkChannelGatekeeper();
   initAgentAndPublisherView();
+  fetchRealChannelMemberCounts(false);
   switchTab("tabDashboard");
 
   if (notify) {
@@ -1282,7 +1292,7 @@ function submitSaveChannel() {
     allowImageToday: true,
     isAutopilot: true,
     status: "active",
-    membersCount: 100
+    membersCount: null
   };
 
   AppState.channels.push(newChannel);
@@ -2221,59 +2231,120 @@ function addLiveLog(text, type = "info") {
   renderLiveLogs();
 }
 
-// نمودارهای آماری با Chart.js
+// تاریخ زنده فارسی و آمار واقعی به تفکیک هر پیام‌رسان
+function getPersianTodayTomorrow() {
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 86400000);
+  const fmt = new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return {
+    today: fmt.format(now),
+    tomorrow: fmt.format(tomorrow)
+  };
+}
+
 function initCharts() {
-  const ctxGrowth = document.getElementById("growthChartCanvas");
-  if (ctxGrowth) {
-    new Chart(ctxGrowth, {
-      type: "line",
-      data: {
-        labels: ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"],
-        datasets: [{
-          label: "عضوگیری خالص روزانه",
-          data: [120, 190, 240, 310, 280, 390, 420],
-          borderColor: "#06B6D4",
-          backgroundColor: "rgba(6, 182, 212, 0.15)",
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#94A3B8" } },
-          y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#94A3B8" } }
-        }
-      }
-    });
+  renderLiveDatesAndAnalytics();
+}
+
+function renderLiveDatesAndAnalytics() {
+  const dates = getPersianTodayTomorrow();
+  const schDateEl = document.getElementById("schedulerLiveDateBanner");
+  if (schDateEl) {
+    schDateEl.textContent = `📅 امروز: ${dates.today} | فردا: ${dates.tomorrow}`;
+  }
+  const anaDateEl = document.getElementById("analyticsLiveDateText");
+  if (anaDateEl) {
+    anaDateEl.textContent = `امروز: ${dates.today} (فردا: ${dates.tomorrow}) — آمار زنده مستقیم از API رسمی پیام‌رسان‌ها`;
+  }
+  renderAnalyticsPerChannel();
+}
+
+function renderAnalyticsPerChannel() {
+  const grid = document.getElementById("analyticsPerChannelGrid");
+  if (!grid) return;
+  if (!AppState.channels || AppState.channels.length === 0) {
+    grid.innerHTML = `<div class="col-span-full p-4 rounded-xl bg-slate-900/60 border border-white/5 text-center text-xs text-slate-400">هنوز کانالی متصل نشده است.</div>`;
+    return;
   }
 
-  const ctxHeat = document.getElementById("heatmapChartCanvas");
-  if (ctxHeat) {
-    new Chart(ctxHeat, {
-      type: "bar",
-      data: {
-        labels: ["۹ صبح", "۱۱ صبح", "۱۳ ظهر", "۱۵ عصر", "۱۷ عصر", "۱۹ شب", "۲۱ شب"],
-        datasets: [{
-          label: "حجم بازدید و تعامل",
-          data: [2100, 3400, 4800, 6200, 5800, 4200, 3100],
-          backgroundColor: "rgba(168, 85, 247, 0.6)",
-          borderColor: "#A855F7",
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: "#94A3B8" } },
-          y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#94A3B8" } }
+  const platformMeta = {
+    telegram: { label: "تلگرام (Telegram)", color: "text-cyan-300", border: "border-cyan-500/30", supportsMembers: true },
+    bale: { label: "بله (Bale)", color: "text-emerald-300", border: "border-emerald-500/30", supportsMembers: true },
+    eitaa: { label: "ایتا (Eitaa)", color: "text-amber-300", border: "border-amber-500/30", supportsMembers: false },
+    rubika: { label: "روبیکا (Rubika)", color: "text-purple-300", border: "border-purple-500/30", supportsMembers: false }
+  };
+
+  grid.innerHTML = AppState.channels.map(ch => {
+    const meta = platformMeta[ch.platform] || { label: ch.platform, color: "text-slate-300", border: "border-white/10", supportsMembers: false };
+    let memberDisplay = "";
+    if (!meta.supportsMembers) {
+      memberDisplay = `<span class="text-xs text-rose-300 font-bold">پشتیبانی نمی‌شود (محدودیت API ${meta.label.split(" ")[0]})</span>`;
+    } else if (typeof ch.membersCount === "number") {
+      memberDisplay = `<span class="text-2xl font-black text-white persian-nums">${ch.membersCount.toLocaleString("fa-IR")}</span> <span class="text-xs text-slate-400">عضو واقعی</span>`;
+    } else {
+      memberDisplay = `<span class="text-xs text-amber-300">در حال استعلام زنده...</span>`;
+    }
+
+    return `
+      <div class="p-4 rounded-xl bg-slate-900/80 border ${meta.border} space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold ${meta.color}">${meta.label}</span>
+          <span class="text-[10px] font-mono text-slate-400 ltr">${ch.target || ""}</span>
+        </div>
+        <div class="text-sm font-bold text-white truncate">${ch.name}</div>
+        <div class="pt-2 border-t border-white/5 flex items-baseline justify-between">
+          <span class="text-[11px] text-slate-400">تعداد اعضای زنده:</span>
+          <div>${memberDisplay}</div>
+        </div>
+        <div class="text-[10px] text-slate-500">
+          ${meta.supportsMembers ? "✅ دریافت مستقیم از API رسمی بدون واسطه" : "ℹ️ این پیام‌رسان آمار اعضا و بازدید را در API ارائه نمی‌دهد"}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function fetchRealChannelMemberCounts(notify = false) {
+  const btn = document.getElementById("btnRefreshLiveStats");
+  if (btn && notify) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-cyan-300 border-t-transparent rounded-full animate-spin"></span><span>در حال استعلام...</span>`;
+  }
+
+  for (const ch of (AppState.channels || [])) {
+    const rawToken = (ch.token || "").startsWith("ENC::") ? ch.token.replace("ENC::", "") : (ch.token || "");
+    if (!rawToken || !ch.target) continue;
+
+    if (ch.platform === "telegram") {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${rawToken}/getChatMemberCount?chat_id=${encodeURIComponent(ch.target)}`);
+        const data = await res.json();
+        if (data && data.ok && typeof data.result === "number") {
+          ch.membersCount = data.result;
         }
-      }
-    });
+      } catch (e) {}
+    } else if (ch.platform === "bale") {
+      try {
+        const res = await fetch(`https://tapi.bale.ai/bot${rawToken}/getChatMembersCount?chat_id=${encodeURIComponent(ch.target)}`);
+        const data = await res.json();
+        if (data && data.ok && typeof data.result === "number") {
+          ch.membersCount = data.result;
+        }
+      } catch (e) {}
+    } else {
+      ch.membersCount = null;
+    }
+  }
+
+  saveChannelsToStorage();
+  updateRealKpiDisplays();
+  renderLiveDatesAndAnalytics();
+
+  if (btn && notify) {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span>استعلام زنده اعضا از API</span>`;
+    if (window.lucide) lucide.createIcons();
+    addLiveLog("آمار واقعی اعضای کانال‌ها از API تلگرام و بله بروزرسانی شد.", "success");
   }
 }
 
