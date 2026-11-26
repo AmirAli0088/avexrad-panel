@@ -379,23 +379,28 @@ function handleLoginSubmit(event) {
   if (btnText) btnText.textContent = "در حال اعتبارسنجی...";
   if (btnSubmit) btnSubmit.disabled = true;
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      // بازگردانی دکمه ورود
-      if (btnSpinner) btnSpinner.classList.add("hidden");
-      if (btnIcon) btnIcon.classList.remove("hidden");
-      if (btnText) btnText.textContent = "ورود به پنل کاربری";
-      if (btnSubmit) btnSubmit.disabled = false;
+      // ۳. بررسی حساب‌های مدیران ارشد (Super Admins) با پشتیبانی از تغییر نام کاربری/رمز
+      const customAdminUsernames = JSON.parse(localStorage.getItem("AVEXRAD_ADMIN_USERNAMES") || "{}");
+      const aliUser = customAdminUsernames["AmirAli_AvexRad"] || "AmirAli_AvexRad";
+      const mahdiUser = customAdminUsernames["AmirMahdi_AvexRad"] || "AmirMahdi_AvexRad";
 
-      // ۳. بررسی حساب‌های مدیران ارشد (Super Admins)
-      const isSuperAdminUser = (username.toLowerCase() === "amirali_avexrad" || username.toLowerCase() === "amirahdi_avexrad" || username === "AmirAli_AvexRad" || username === "AmirMahdi_AvexRad");
-      if (isSuperAdminUser) {
-        const canonicalUsername = (username.toLowerCase() === "amirali_avexrad") ? "AmirAli_AvexRad" : "AmirMahdi_AvexRad";
-        const validPass = AppState.adminPasswords[canonicalUsername] || (canonicalUsername === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
+      let matchedAdminKey = null;
+      if (username.toLowerCase() === aliUser.toLowerCase() || username.toLowerCase() === "amirali_avexrad") {
+        matchedAdminKey = "AmirAli_AvexRad";
+      } else if (username.toLowerCase() === mahdiUser.toLowerCase() || username.toLowerCase() === "amirmahdi_avexrad") {
+        matchedAdminKey = "AmirMahdi_AvexRad";
+      }
+
+      if (matchedAdminKey) {
+        const canonicalUsername = matchedAdminKey === "AmirAli_AvexRad" ? aliUser : mahdiUser;
+        const validPass = AppState.adminPasswords[matchedAdminKey] || (matchedAdminKey === "AmirAli_AvexRad" ? "alipass88" : "mahdipass88");
         if (password === validPass) {
           const adminUser = {
             username: canonicalUsername,
-            fullName: canonicalUsername === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
+            canonicalKey: matchedAdminKey,
+            fullName: matchedAdminKey === "AmirAli_AvexRad" ? "امیرعلی عبدالعظیمی" : "امیرمهدی افضلی",
             role: "super_admin",
             planId: "super_admin"
           };
@@ -407,11 +412,11 @@ function handleLoginSubmit(event) {
         }
       }
 
-      // ۴. بررسی حساب‌های مشتریان ثبت‌شده
+      // ۴. بررسی حساب‌های مشتریان ثبت‌شده در حافظه محلی
       const regClients = JSON.parse(localStorage.getItem("AVEXRAD_REGISTERED_CLIENTS") || "[]");
       const clientAccounts = Array.isArray(regClients) ? regClients : [];
       const appClients = Array.isArray(AppState.clients) ? AppState.clients : [];
-      
+
       const targetClient = clientAccounts.find(c => c && typeof c.username === "string" && c.username.toLowerCase() === username.toLowerCase()) ||
                            appClients.find(c => c && typeof c.username === "string" && c.username.toLowerCase() === username.toLowerCase());
 
@@ -431,18 +436,32 @@ function handleLoginSubmit(event) {
         }
       }
 
-      // ۵. اگر نام کاربری اصلاً یافت نشد
-      showLoginError(`حساب کاربری با نام «${username}» یافت نشد. لطفاً اطلاعات خود را بررسی نمایید.`, "username");
+      // ۵. استعلام از دیتابیس ابری گوگل شیت (برای اکانت‌هایی که در دستگاه/مرورگر دیگر ساخته شده‌اند)
+      const gasAuth = await callGasApi("auth/login", { username: username, password: password });
+      if (gasAuth && gasAuth.ok && gasAuth.user) {
+        const u = gasAuth.user;
+        loginSuccess({
+          username: u.username,
+          fullName: u.fullName || u.username,
+          role: u.role || "client",
+          planId: u.planId || "basic"
+        }, true);
+        return;
+      }
+
+      // ۶. اگر نام کاربری اصلاً یافت نشد
+      showLoginError(`حساب کاربری با نام «${username}» یافت نشد یا رمز عبور اشتباه است.`, "username");
 
     } catch(err) {
       console.error("Login Handler Error:", err);
+      showLoginError("خطا در پردازش اطلاعات ورود: " + (err.message || "لطفاً مجدداً تلاش کنید."));
+    } finally {
       if (btnSpinner) btnSpinner.classList.add("hidden");
       if (btnIcon) btnIcon.classList.remove("hidden");
       if (btnText) btnText.textContent = "ورود به پنل کاربری";
       if (btnSubmit) btnSubmit.disabled = false;
-      showLoginError("خطا در پردازش اطلاعات ورود: " + (err.message || "لطفاً مجدداً تلاش کنید."));
     }
-  }, 400);
+  }, 250);
 
   return false;
 }
@@ -515,6 +534,10 @@ function loginSuccess(user, notify = true) {
   renderActiveChannelDetails();
   checkChannelGatekeeper();
   initAgentAndPublisherView();
+  loadGlobalAdBanner();
+  if (user.role === "super_admin" || user.planId === "super_admin") {
+    syncAdminCloudData();
+  }
   fetchRealChannelMemberCounts(false);
   switchTab("tabDashboard");
 
@@ -1756,16 +1779,20 @@ function renderOrdersTable() {
       <td class="py-2.5 px-3 font-bold text-cyan-300 uppercase">${ord.planId}</td>
       <td class="py-2.5 px-3 font-bold text-white persian-nums">${ord.amount}</td>
       <td class="py-2.5 px-3">
-        <span class="px-2 py-0.5 rounded-full text-[10px] ${ord.status === 'approved' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300 font-bold'}">
-          ${ord.status === 'approved' ? 'تایید و فعال شده' : 'در انتظار تایید'}
+        <span class="px-2 py-0.5 rounded-full text-[10px] ${ord.status === 'approved' ? 'bg-emerald-500/20 text-emerald-300 font-bold' : (ord.status === 'rejected' ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-amber-500/20 text-amber-300 font-bold')}">
+          ${ord.status === 'approved' ? 'تایید شده (آماده ساخت اکانت)' : (ord.status === 'rejected' ? 'رد شده' : 'در انتظار تایید')}
         </span>
       </td>
       <td class="py-2.5 px-3 text-left">
-        ${ord.status === 'approved' ? '<span class="text-xs text-slate-500">انجام شد</span>' : `
-          <button onclick="approveOrder('${ord.id}')" class="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow-sm">
-            تایید و فعال‌سازی
+        ${ord.status === 'approved' ? `
+          <button onclick="openCreateAccountFromOrder('${ord.id}')" class="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition shadow-sm cursor-pointer">
+            👤 ساخت اکانت مشتری
           </button>
-        `}
+        ` : (ord.status === 'rejected' ? '<span class="text-xs text-rose-400">رد شده</span>' : `
+          <button onclick="approveOrder('${ord.id}')" class="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow-sm cursor-pointer">
+            تایید و ساخت اکانت
+          </button>
+        `)}
       </td>
     `;
     tbody.appendChild(tr);
@@ -1810,28 +1837,20 @@ function approveOrder(orderId) {
   });
   localStorage.setItem("AVEXRAD_REGISTERED_CLIENTS", JSON.stringify(REGISTERED_CLIENT_ACCOUNTS));
 
-  if (ord.chat_id || ord.telegramChatId) {
-    const chatId = ord.chat_id || ord.telegramChatId;
-    const msg = `🎉 سفارش شما (${orderId}) با موفقیت تایید و حساب شما فعال گردید!
-
-` +
-      `🌐 سامانه اَوِکس‌راد:
-https://amirali0088.github.io/avexrad-panel/
-
-` +
-      `👤 نام کاربری: ${username}
-` +
-      `🔑 رمز عبور: ${password}
-` +
-      `✨ سطح پلن: ${planId.toUpperCase()}
-
-` +
-      `تیم اَوِکس‌راد همراه همیشگی شماست.`;
+  const contactMatch = String(ord.contact || "").match(/chat_id:\s*(-?\d+)/);
+  const extractedChatId = ord.chat_id || ord.telegramChatId || (contactMatch && contactMatch[1]) || null;
+  if (extractedChatId) {
+    const msg = `🎉 سفارش شما (${orderId}) تایید و حساب کاربری شما فعال گردید!\n\n` +
+      `🌐 لینک ورود به پنل:\nhttps://script.google.com/macros/s/AKfycbxTR0taCH_QU_4gWHrXFW2BuPELd8FqbB68cDxgjGcW7Y7rDAoO289Zdz7Pl3xkU4qr/exec\n\n` +
+      `👤 نام کاربری: ${username}\n` +
+      `🔑 رمز عبور: ${password}\n` +
+      `✨ سطح پلن: ${planId.toUpperCase()}\n\n` +
+      `💬 پشتیبانی: @AvexRad`;
     
-    fetch("https://api.telegram.org/bot9026405874:AAGtlrjjTfg7BY2bDWag9QR_jF9dRWgQGS4/sendMessage", {
+    fetch("https://api.telegram.org/bot9035086136:AAGSdPzXE9jzRFgsZvwz4gAhPch-QE_7Xxg/sendMessage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: msg })
+      body: JSON.stringify({ chat_id: extractedChatId, text: msg })
     }).catch(e => console.warn("Telegram notification error:", e));
   }
 
@@ -1886,10 +1905,13 @@ function renderClientsTable() {
         <span class="px-2 py-0.5 rounded-full text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold persian-nums">${c.activeDevices || 1} از ${c.deviceLimit || 2} مجاز</span>
       </td>
       <td class="py-2.5 px-3 text-left whitespace-nowrap">
-        <div class="flex items-center gap-2">
-          <button onclick="impersonateClient('${c.id}')" class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold transition border border-cyan-500/30 flex items-center gap-1">
+        <div class="flex items-center gap-1.5">
+          <button onclick="impersonateClient('${c.id}')" class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold transition border border-cyan-500/30 flex items-center gap-1" title="ورود مستقیم به پنل این مشتری">
             <i data-lucide="external-link" class="w-3 h-3"></i>
-            <span>مشاهده پنل (Inspect)</span>
+            <span>ورود به پنل</span>
+          </button>
+          <button onclick="editClientCredentials('${c.id}')" class="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition border border-amber-500/30" title="ویرایش نام کاربری و رمز عبور">
+            ✏️
           </button>
           <button onclick="deleteClient('${c.id}')" class="p-1 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition" title="حذف مشترک">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -1902,6 +1924,17 @@ function renderClientsTable() {
 
   if (typeof renderPublisherChannelsList === "function") renderPublisherChannelsList();
   if (window.lucide) lucide.createIcons();
+}
+
+function openCreateAccountFromOrder(orderId) {
+  const ord = AppState.pendingOrders.find(o => o.id === orderId);
+  openNewClientModal();
+  if (ord) {
+    const fnEl = document.getElementById("newClientFullName");
+    const plEl = document.getElementById("newClientPlan");
+    if (fnEl && ord.customerName) fnEl.value = ord.customerName;
+    if (plEl && ord.planId) plEl.value = ord.planId;
+  }
 }
 
 function openNewClientModal() {
@@ -2079,6 +2112,186 @@ function deleteClient(clientId) {
   renderClientsTable();
   updateRealKpiDisplays();
   addLiveLog(`مشترک «${client.fullName}» از سامانه حذف گردید.`, "info");
+}
+
+function editClientCredentials(clientId) {
+  const client = AppState.clients.find(c => c.id === clientId);
+  if (!client) return;
+  const newUser = prompt(`نام کاربری جدید برای «${client.fullName}»:`, client.username);
+  if (newUser === null) return;
+  const newPass = prompt(`رمز عبور جدید برای «@${newUser.trim() || client.username}» (خالی = بدون تغییر):`, client.password || "");
+  if (newPass === null) return;
+
+  const oldUsername = client.username;
+  if (newUser.trim()) client.username = newUser.trim();
+  if (newPass.trim()) client.password = newPass.trim();
+
+  localStorage.setItem("AVEXRAD_CLIENTS", JSON.stringify(AppState.clients));
+  const regIdx = REGISTERED_CLIENT_ACCOUNTS.findIndex(c => c.username.toLowerCase() === oldUsername.toLowerCase());
+  if (regIdx !== -1) {
+    REGISTERED_CLIENT_ACCOUNTS[regIdx].username = client.username;
+    REGISTERED_CLIENT_ACCOUNTS[regIdx].password = client.password;
+  } else {
+    REGISTERED_CLIENT_ACCOUNTS.push({
+      username: client.username,
+      password: client.password,
+      fullName: client.fullName,
+      planId: client.planId,
+      deviceLimit: client.deviceLimit || 2
+    });
+  }
+  localStorage.setItem("AVEXRAD_REGISTERED_CLIENTS", JSON.stringify(REGISTERED_CLIENT_ACCOUNTS));
+
+  callGasApi("clients/update_credentials", {
+    old_username: oldUsername,
+    new_username: client.username,
+    new_password: client.password,
+    full_name: client.fullName
+  });
+
+  renderClientsTable();
+  addLiveLog(`اطلاعات ورود مشتری «${client.fullName}» به @${client.username} تغییر یافت.`, "success");
+  alert(`✅ اطلاعات ورود به‌روزرسانی شد:\nنام کاربری: ${client.username}\nرمز عبور: ${client.password}`);
+}
+
+function updateAdminCredentials() {
+  const targetKey = (document.getElementById("admCredTargetSelect") && document.getElementById("admCredTargetSelect").value) || "AmirAli_AvexRad";
+  const newUsername = (document.getElementById("admCredNewUsername") && document.getElementById("admCredNewUsername").value.trim()) || "";
+  const newPassword = (document.getElementById("admCredNewPassword") && document.getElementById("admCredNewPassword").value.trim()) || "";
+
+  if (!newUsername && !newPassword) {
+    alert("لطفاً حداقل نام کاربری جدید یا رمز عبور جدید را وارد کنید.");
+    return;
+  }
+
+  if (newUsername) {
+    const customUsernames = JSON.parse(localStorage.getItem("AVEXRAD_ADMIN_USERNAMES") || "{}");
+    customUsernames[targetKey] = newUsername;
+    localStorage.setItem("AVEXRAD_ADMIN_USERNAMES", JSON.stringify(customUsernames));
+  }
+  if (newPassword) {
+    AppState.adminPasswords[targetKey] = newPassword;
+    localStorage.setItem("AVEXRAD_ADMIN_PASSWORDS", JSON.stringify(AppState.adminPasswords));
+  }
+
+  callGasApi("clients/update_credentials", {
+    old_username: targetKey,
+    new_username: newUsername || targetKey,
+    new_password: newPassword
+  });
+
+  if (document.getElementById("admCredNewUsername")) document.getElementById("admCredNewUsername").value = "";
+  if (document.getElementById("admCredNewPassword")) document.getElementById("admCredNewPassword").value = "";
+  addLiveLog(`اطلاعات ورود مدیر (${targetKey}) با موفقیت به‌روزرسانی شد.`, "success");
+  alert("✅ نام کاربری / رمز عبور مدیر با موفقیت ذخیره شد.");
+}
+
+async function saveAdminGlobalAd() {
+  const title = (document.getElementById("admAdTitleInput") && document.getElementById("admAdTitleInput").value.trim()) || "";
+  const text = (document.getElementById("admAdTextInput") && document.getElementById("admAdTextInput").value.trim()) || "";
+  const link = (document.getElementById("admAdLinkInput") && document.getElementById("admAdLinkInput").value.trim()) || "";
+  const active = document.getElementById("admAdActiveCheckbox") ? document.getElementById("admAdActiveCheckbox").checked : true;
+
+  const adObj = { active: active, title: title, text: text, link: link };
+  localStorage.setItem("AVEXRAD_GLOBAL_AD", JSON.stringify(adObj));
+  applyGlobalAdToUI(adObj);
+  await callGasApi("system/save_ad", adObj);
+  addLiveLog("تنظیمات جایگاه تبلیغات سراسری پنل ذخیره شد.", "success");
+  alert("✅ جایگاه تبلیغات با موفقیت برای همه کاربران به‌روزرسانی شد.");
+}
+
+async function loadGlobalAdBanner() {
+  let adObj = null;
+  try {
+    const res = await callGasApi("system/get_ad");
+    if (res && res.ok && res.ad) {
+      adObj = res.ad;
+      localStorage.setItem("AVEXRAD_GLOBAL_AD", JSON.stringify(adObj));
+    }
+  } catch (e) {}
+  if (!adObj) {
+    try { adObj = JSON.parse(localStorage.getItem("AVEXRAD_GLOBAL_AD") || "null"); } catch(e) {}
+  }
+  if (adObj) applyGlobalAdToUI(adObj);
+}
+
+function applyGlobalAdToUI(adObj) {
+  const card = document.getElementById("globalAdBannerCard");
+  const titleEl = document.getElementById("globalAdTitle");
+  const textEl = document.getElementById("globalAdText");
+  const linkBtn = document.getElementById("globalAdLinkBtn");
+  if (!card) return;
+
+  if (adObj.active === false) {
+    card.classList.add("hidden");
+  } else {
+    card.classList.remove("hidden");
+    if (titleEl && adObj.title) titleEl.textContent = adObj.title;
+    if (textEl && adObj.text) textEl.textContent = adObj.text;
+    if (linkBtn) {
+      if (adObj.link) {
+        linkBtn.href = adObj.link;
+        linkBtn.classList.remove("hidden");
+      } else {
+        linkBtn.classList.add("hidden");
+      }
+    }
+  }
+  // پر کردن فرم ادمین
+  const inpTitle = document.getElementById("admAdTitleInput");
+  const inpText = document.getElementById("admAdTextInput");
+  const inpLink = document.getElementById("admAdLinkInput");
+  const inpChk = document.getElementById("admAdActiveCheckbox");
+  if (inpTitle && adObj.title) inpTitle.value = adObj.title;
+  if (inpText && adObj.text) inpText.value = adObj.text;
+  if (inpLink && adObj.link) inpLink.value = adObj.link;
+  if (inpChk) inpChk.checked = (adObj.active !== false);
+}
+
+async function syncAdminCloudData() {
+  try {
+    const ordRes = await callGasApi("orders/list");
+    if (ordRes && ordRes.ok && Array.isArray(ordRes.orders)) {
+      AppState.pendingOrders = ordRes.orders.map(o => ({
+        id: o.order_id,
+        customerName: o.customer_name,
+        contact: o.customer_contact,
+        platform: o.platform || "telegram",
+        planId: o.plan_id || "pro",
+        amount: o.amount || "-",
+        receiptNote: o.receipt_note || "",
+        status: o.status || "pending"
+      }));
+      localStorage.setItem("AVEXRAD_PENDING_ORDERS", JSON.stringify(AppState.pendingOrders));
+      renderOrdersTable();
+      updateRealKpiDisplays();
+    }
+  } catch (e) {}
+
+  try {
+    const cliRes = await callGasApi("clients/list");
+    if (cliRes && cliRes.ok && Array.isArray(cliRes.clients)) {
+      const existingMap = new Map((AppState.clients || []).map(c => [c.username.toLowerCase(), c]));
+      cliRes.clients.forEach(rc => {
+        if (rc.username && !existingMap.has(rc.username.toLowerCase())) {
+          AppState.clients.push({
+            id: rc.id,
+            fullName: rc.fullName,
+            username: rc.username,
+            password: "******",
+            planId: rc.planId || "basic",
+            channelsCount: 0,
+            subEnd: rc.subEnd || "۳۰ روز",
+            deviceLimit: 2,
+            activeDevices: 1,
+            status: "active"
+          });
+        }
+      });
+      localStorage.setItem("AVEXRAD_CLIENTS", JSON.stringify(AppState.clients));
+      renderClientsTable();
+    }
+  } catch (e) {}
 }
 
 // ----------------- سیستم کنترل سقف دستگاه‌ها (Multi-Device Policy) -----------------
@@ -2312,32 +2525,60 @@ function renderAnalyticsPerChannel() {
 
 async function fetchRealChannelMemberCounts(notify = false) {
   const btn = document.getElementById("btnRefreshLiveStats");
+  const statusBanner = document.getElementById("analyticsQueryStatusBanner");
+  const statusText = document.getElementById("analyticsQueryStatusText");
+
+  const showProgress = (msg) => {
+    if (statusBanner) statusBanner.classList.remove("hidden");
+    if (statusText) statusText.textContent = msg;
+  };
+
   if (btn && notify) {
     btn.disabled = true;
     btn.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-cyan-300 border-t-transparent rounded-full animate-spin"></span><span>در حال استعلام...</span>`;
+    showProgress("شروع استعلام زنده از سرور پیام‌رسان‌ها...");
   }
 
+  const resultsSummary = [];
   for (const ch of (AppState.channels || [])) {
     const rawToken = (ch.token || "").startsWith("ENC::") ? ch.token.replace("ENC::", "") : (ch.token || "");
     if (!rawToken || !ch.target) continue;
 
     if (ch.platform === "telegram") {
+      if (notify) showProgress(`⏳ در حال دریافت تعداد اعضای زنده از تلگرام (${ch.target})...`);
       try {
         const res = await fetch(`https://api.telegram.org/bot${rawToken}/getChatMemberCount?chat_id=${encodeURIComponent(ch.target)}`);
         const data = await res.json();
         if (data && data.ok && typeof data.result === "number") {
           ch.membersCount = data.result;
           ch._realStatsFetched = true;
+          ch._statsError = null;
+          resultsSummary.push(`تلگرام: ${data.result.toLocaleString("fa-IR")} عضو`);
+        } else {
+          ch._statsError = (data && data.description) || "خطا در پاسخ تلگرام";
+          resultsSummary.push(`تلگرام: خطا (${ch._statsError})`);
         }
-      } catch (e) {}
+      } catch (e) {
+        ch._statsError = "خطای شبکه تلگرام";
+        resultsSummary.push("تلگرام: خطای ارتباط");
+      }
+      renderLiveDatesAndAnalytics();
     } else if (ch.platform === "bale") {
+      if (notify) showProgress(`⏳ در حال دریافت تعداد اعضای زنده از بله (${ch.target})...`);
       try {
         const data = await callGasApi("channel/get_member_count", { platform: "bale", token: rawToken, target: ch.target });
         if (data && data.ok && typeof data.result === "number") {
           ch.membersCount = data.result;
           ch._realStatsFetched = true;
+          ch._statsError = null;
+          resultsSummary.push(`بله: ${data.result.toLocaleString("fa-IR")} عضو`);
+        } else {
+          resultsSummary.push("بله: نیازمند پنل ابری GAS");
         }
-      } catch (e) {}
+      } catch (e) {
+        resultsSummary.push("بله: خطای ارتباط");
+      }
+      renderLiveDatesAndAnalytics();
     } else {
       ch.membersCount = null;
     }
@@ -2351,7 +2592,13 @@ async function fetchRealChannelMemberCounts(notify = false) {
     btn.disabled = false;
     btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span>استعلام زنده اعضا از API</span>`;
     if (window.lucide) lucide.createIcons();
-    addLiveLog("آمار واقعی اعضای کانال‌ها از API تلگرام و بله بروزرسانی شد.", "success");
+    const summaryStr = resultsSummary.length > 0 ? resultsSummary.join(" | ") : "کانالی برای استعلام یافت نشد";
+    if (statusText) statusText.textContent = `✅ استعلام تکمیل شد — ${summaryStr}`;
+    if (statusBanner) {
+      const spinner = statusBanner.querySelector("span.animate-spin");
+      if (spinner) spinner.classList.add("hidden");
+    }
+    addLiveLog(`استعلام زنده اعضا انجام شد: ${summaryStr}`, "success");
   }
 }
 
