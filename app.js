@@ -595,18 +595,22 @@ function switchTab(tabId) {
       }
     }
     if (navBtn) {
+      const keepHidden = navBtn.classList.contains("hidden");
       if (t === tabId) {
         navBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20";
       } else {
         navBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800";
       }
+      if (keepHidden) navBtn.classList.add("hidden");
     }
     if (drawerBtn) {
+      const keepDrawerHidden = drawerBtn.classList.contains("hidden");
       if (t === tabId) {
-        drawerBtn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition";
+        drawerBtn.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition";
       } else {
-        drawerBtn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 text-xs font-medium transition";
+        drawerBtn.className = "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 text-xs font-medium transition";
       }
+      if (keepDrawerHidden) drawerBtn.classList.add("hidden");
     }
   });
 
@@ -632,6 +636,10 @@ function applyPlanRole(planId) {
   const drawerAdmin = document.getElementById("drawerTabAdminOrders");
   const badge = document.getElementById("planBadge");
 
+  const dashPlanBadge = document.getElementById("dashPlanBadge");
+  const dashSubRemaining = document.getElementById("dashSubRemainingText");
+  const drawerPlanBadge = document.getElementById("drawerPlanBadge");
+
   if (isSuper) {
     if (banner) banner.classList.remove("hidden");
     if (navAdmin) navAdmin.classList.remove("hidden");
@@ -640,14 +648,21 @@ function applyPlanRole(planId) {
       badge.textContent = "مدیریت ارشد اَوِکس‌راد (VIP)";
       badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-black border border-purple-400 shadow-md shadow-purple-500/30";
     }
+    if (dashPlanBadge) dashPlanBadge.textContent = "مدیریت ارشد VIP";
+    if (dashSubRemaining) dashSubRemaining.textContent = "مادام‌العمر VIP";
+    if (drawerPlanBadge) drawerPlanBadge.textContent = "مدیریت ارشد VIP";
   } else {
     if (banner) banner.classList.add("hidden");
     if (navAdmin) navAdmin.classList.add("hidden");
     if (drawerAdmin) drawerAdmin.classList.add("hidden");
+    const planName = (AppState.currentPlan && AppState.currentPlan.name) || "پلن فعال";
     if (badge) {
-      badge.textContent = (AppState.currentPlan && AppState.currentPlan.name) || "پلن فعال";
+      badge.textContent = planName;
       badge.className = `text-xs px-2 py-0.5 rounded-full ${(AppState.currentPlan && AppState.currentPlan.badgeColor) || 'bg-slate-700 text-slate-200'} font-semibold`;
     }
+    if (dashPlanBadge) dashPlanBadge.textContent = planName;
+    if (dashSubRemaining) dashSubRemaining.textContent = "۳۰ روز تا تمدید";
+    if (drawerPlanBadge) drawerPlanBadge.textContent = planName;
   }
 
   // تب‌های مجاز برای هر پلن (داشبورد و راهنما همیشه برای همه باز است)
