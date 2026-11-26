@@ -157,12 +157,6 @@
         </div>
       </div>
     </div>
-        <div class="p-2 rounded-xl bg-slate-900 border border-white/5 space-y-0.5">
-          <span class="text-[10px] text-slate-400">ویدیو:</span>
-          <div id="drawerVidQuota" class="font-bold text-cyan-300 persian-nums text-xs">نامحدود</div>
-        </div>
-      </div>
-    </div>
 
     <!-- لینک‌های ناوبری اصلی -->
     <nav class="p-3 space-y-1.5 flex-1 overflow-y-auto text-xs">
@@ -194,7 +188,7 @@
         <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> راهنما و آموزش جامع</span>
       </button>
 
-      <button onclick="switchTab('tabAdminOrders'); closeMobileDrawer();" id="drawerTabAdmin" class="w-full text-right p-2.5 rounded-xl font-semibold text-amber-300 hover:bg-amber-500/10 transition flex items-center justify-between border border-amber-500/20">
+      <button onclick="switchTab('tabAdminOrders'); closeMobileDrawer();" id="drawerTabAdminOrders" class="w-full text-right p-2.5 rounded-xl font-semibold text-amber-300 hover:bg-amber-500/10 transition flex items-center justify-between border border-amber-500/20">
         <span class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i> سفارشات و فرماندهی ارشد</span>
         <span class="text-[10px] text-amber-400 font-bold persian-nums" id="drawerOrdersBadge">۰</span>
       </button>
@@ -273,8 +267,8 @@
     </div>
   </header>
 
-  <!-- نوار ناوبری افقی اختصاصی دسکتاپ و تبلت -->
-  <div class="hidden lg:block border-b border-white/10 bg-slate-950/70 backdrop-blur-md sticky top-[57px] z-30">
+  <!-- نوار ناوبری افقی اختصاصی دسکتاپ و تبلت (مخفی - همه موارد داخل منوی همبرگری) -->
+  <div class="hidden border-b border-white/10 bg-slate-950/70 backdrop-blur-md sticky top-[57px] z-30">
     <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
       <div class="flex items-center gap-2">
         <button onclick="switchTab('tabDashboard')" id="navTabDashboard" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
