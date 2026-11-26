@@ -130,20 +130,12 @@
       </button>
     </div>
 
-    <!-- سهمیه‌ها در منوی کشویی -->
+    <!-- وضعیت پلن و دستگاه‌ها در منوی کشویی -->
     <div class="p-3 border-b border-white/5 space-y-2 text-xs">
       <div class="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-        <span>سهمیه‌های امروز شما:</span>
+        <span>سطح اشتراک فعال:</span>
         <span id="drawerPlanBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">حرفه‌ای VIP</span>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="p-2 rounded-xl bg-slate-900 border border-white/5 space-y-0.5">
-          <span class="text-[10px] text-slate-400">عکس امروز:</span>
-          <div id="drawerImgQuota" class="font-bold text-purple-300 persian-nums text-xs">نامحدود</div>
-        </div>
-
-    <!-- وضعیت دستگاه‌ها و پلن در منوی کشویی -->
-    <div class="p-3 border-b border-white/5 space-y-1.5 text-xs">
       <div class="flex items-center justify-between text-[11px] text-slate-400">
         <span class="flex items-center gap-1"><i data-lucide="laptop" class="w-3.5 h-3.5 text-cyan-400"></i> دستگاه‌های همزمان:</span>
         <span id="drawerDeviceStatus" class="font-bold text-cyan-300 persian-nums">۱ از ۲ فعال</span>
@@ -523,64 +515,60 @@
           </div>
         </div>
 
-        <!-- سهمیه‌های روزانه -->
+        <!-- وضعیت کانال‌ها و ارسال‌های امروز -->
         <div class="p-5 rounded-2xl glass-panel space-y-3">
           <div class="flex items-center justify-between border-b border-white/10 pb-2">
             <h4 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i>
-              <span>سهمیه‌های مصرفی امروز</span>
+              <i data-lucide="radio" class="w-4 h-4 text-cyan-400"></i>
+              <span>وضعیت کانال‌ها و فعالیت امروز</span>
             </h4>
-            <span class="text-[10px] text-slate-400">ریست در ۰۰:۰۰ بامداد</span>
+            <span class="text-[10px] text-slate-400">گزارش زنده</span>
           </div>
 
-          <div class="space-y-2.5 text-xs">
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-[11px] text-slate-400">
-                <span>سهمیه پوستر و تصویر:</span>
-                <span id="dashImgQuotaText" class="font-bold text-purple-300 persian-nums">۱۰ از ۱۰</span>
-              </div>
-              <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div id="dashImgQuotaBar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-1.5 rounded-full" style="width: 100%"></div>
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-[11px] text-slate-400">
-                <span>سهمیه ریلز ویدیویی:</span>
-                <span id="dashVidQuotaText" class="font-bold text-cyan-300 persian-nums">۶۰ ثانیه</span>
-              </div>
-              <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div id="dashVidQuotaBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full" style="width: 100%"></div>
-              </div>
-            </div>
-
+          <div class="space-y-3 text-xs">
             <div class="space-y-1">
               <div class="flex items-center justify-between text-[11px] text-slate-400">
                 <span>کانال‌های متصل:</span>
-                <span id="dashChannelQuotaText" class="font-bold text-emerald-300 persian-nums">۳ کانال رسمی فعال</span>
+                <span id="dashChannelQuotaText" class="font-bold text-emerald-300 persian-nums">۰ کانال فعال</span>
               </div>
               <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div id="dashChannelQuotaBar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full" style="width: 37%"></div>
+                <div id="dashChannelQuotaBar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full" style="width: 0%"></div>
               </div>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
+              <span class="text-slate-400 flex items-center gap-1.5"><i data-lucide="send" class="w-3.5 h-3.5 text-purple-400"></i> پست‌های ارسال‌شده امروز:</span>
+              <span id="dashTodayPostsCount" class="font-bold text-purple-300 persian-nums">۰ پست</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- جایگاه تبلیغات مشارکتی (Sponsored Ads Spot) -->
-      <div class="p-4 rounded-2xl glass-panel border border-dashed border-cyan-500/30 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-            <i data-lucide="megaphone" class="w-5 h-5"></i>
+      <!-- جایگاه تبلیغات سراسری پنل (با نشان AD و کنترل کامل ادمین) -->
+      <div id="globalAdBannerCard" class="p-4 rounded-2xl glass-panel border border-dashed border-amber-500/40 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black tracking-wider">AD · تبلیغات</span>
+          <span class="text-[10px] text-slate-500">جایگاه ویژه اسپانسرینگ اَوِکس راد</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+              <i data-lucide="megaphone" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div id="globalAdTitle" class="font-bold text-xs text-white">جایگاه تبلیغات و اسپانسرینگ اَوِکس راد</div>
+              <p id="globalAdText" class="text-[11px] text-slate-400">برای معرفی کسب‌وکار، کانال یا محصولات خود در پنل تمامی کاربران می‌توانید این جایگاه را رزرو کنید.</p>
+            </div>
           </div>
-          <div>
-            <div class="font-bold text-xs text-white">جایگاه تبلیغات و اسپانسرینگ اَوِکس‌راد (AvexRad Ads Network)</div>
-            <p class="text-[11px] text-slate-400">آماده جذب و نمایش کمپین‌های تبلیغاتی در پنل تمامی مشترکین</p>
+          <div class="flex items-center gap-2 shrink-0">
+            <a id="globalAdLinkBtn" href="#" target="_blank" class="hidden px-3.5 py-1.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 transition">
+              مشاهده
+            </a>
+            <a href="https://t.me/AvexRad" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition">
+              رزرو جایگاه تبلیغات (@AvexRad)
+            </a>
           </div>
         </div>
-        <a href="https://t.me/AvexRad" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition">
-          رزرو جایگاه تبلیغات
-        </a>
       </div>
 
     </div>
@@ -842,19 +830,16 @@
 
       </div>
 
-      <!-- بخش ۲: انتشار چندکاناله بدون اشغال فضا (Zero-Storage Multi-Channel Publisher) -->
+      <!-- بخش ۲: انتشار همزمان در همه کانال‌ها -->
       <div class="p-5 rounded-2xl glass-panel space-y-4 border border-emerald-500/20">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
           <div>
             <h3 class="font-bold text-sm text-white flex items-center gap-2">
               <i data-lucide="share-2" class="w-4 h-4 text-emerald-400"></i>
-              <span>انتشار همزمان در همه کانال‌ها (بدون اشغال فضای سرور)</span>
+              <span>انتشار همزمان در کانال‌ها</span>
             </h3>
-            <p class="text-xs text-slate-400">متن، عکس یا ویدیوی آماده خود را انتخاب کنید تا همزمان در کانال‌های متصل شما منتشر شود</p>
+            <p class="text-xs text-slate-400">محتوای آماده خود (متن، عکس یا ویدیو) را انتخاب کنید تا همزمان در کانال‌های متصل شما منتشر شود.</p>
           </div>
-          <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
-            ⚡ پاکسازی خودکار و آنی پس از ارسال (Zero-Storage)
-          </span>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -868,10 +853,12 @@
                   <option value="photo">🖼 تصویر + کپشن</option>
                   <option value="video">🎬 ویدیو + کپشن</option>
                 </select>
+                <p class="text-[10px] text-slate-500">نوع محتوای ارسالی به کانال‌ها را مشخص کنید.</p>
               </div>
               <div id="pubFileInputWrap" class="hidden space-y-1">
-                <label class="text-[11px] text-slate-400">انتخاب فایل (حداکثر ۱۵ مگابایت - بدون ذخیره در سرور):</label>
+                <label class="text-[11px] text-slate-400">انتخاب فایل (حداکثر ۱۵ مگابایت):</label>
                 <input type="file" id="pubMediaFileInput" accept="image/*,video/*" onchange="previewPublisherFile()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 file:ml-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-cyan-500/20 file:text-cyan-300">
+                <p class="text-[10px] text-slate-500">فایل انتخابی مستقیماً به پیام‌رسان‌های مقصد ارسال می‌شود.</p>
               </div>
             </div>
 
@@ -903,7 +890,7 @@
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span>انتشار همزمان در کانال‌ها</span>
               </button>
-              <p class="text-[10px] text-slate-500 text-center">فایل بلافاصله پس از ارسال موفق از حافظه پاک می‌شود.</p>
+              <p class="text-[10px] text-slate-500 text-center">محتوا همزمان به کانال‌های تیک‌خورده ارسال می‌شود.</p>
             </div>
           </div>
         </div>
@@ -1043,6 +1030,12 @@
           </button>
         </div>
 
+        <!-- بنر وضعیت لحظه‌ای استعلام -->
+        <div id="analyticsQueryStatusBanner" class="hidden p-3 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-xs text-cyan-300 flex items-center gap-2">
+          <span class="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin shrink-0"></span>
+          <span id="analyticsQueryStatusText">در حال ارتباط با سرور پیام‌رسان‌ها...</span>
+        </div>
+
         <!-- کارت‌های جداگانه هر کانال -->
         <div id="analyticsPerChannelGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <!-- با JS پر می‌شود -->
@@ -1100,36 +1093,27 @@
         </div>
       </div>
 
-      <!-- کارت‌های ۴گانه آموزش جامع -->
+      <!-- کارت‌های راهنما و آموزش جامع -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <!-- ۱. معماری ابری و فعالیت ۲۴/۷ بدون نیاز به لپ‌تاپ -->
+        <!-- ۱. راهنمای کامل ایجنت اختصاصی و درخواست سناریو -->
         <div class="p-5 rounded-2xl glass-panel space-y-4">
           <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h4 class="font-bold text-sm text-cyan-300 flex items-center gap-2">
-              <i data-lucide="cloud-lightning" class="w-4 h-4 text-cyan-400"></i>
-              <span>۱. معماری ۲۴/۷ ابری و کارکرد بدون لپ‌تاپ</span>
+            <h4 class="font-bold text-sm text-purple-300 flex items-center gap-2">
+              <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+              <span>۱. راهنمای ایجنت اختصاصی و تنظیم سناریو</span>
             </h4>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">۱۰۰٪ سرورلس ابری</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">مدیریت‌شده توسط تیم فنی</span>
           </div>
           <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
             <p>
-              ربات‌های فروش و ثبت سفارش اَوِکس‌راد بر بستر <strong class="text-white">Google Apps Script Webhook</strong> و زیرساخت جهانی Google Cloud میزبانی می‌شوند.
+              در سامانه اَوِکس راد، تولید و زمان‌بندی محتوای تخصصی کانال شما به‌جای ابزارهای عمومی، توسط <strong class="text-white">ایجنت اختصاصی</strong> متناسب با موضوع کانال شما انجام می‌شود.
             </p>
-            <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
-              <div class="flex items-center gap-2 text-emerald-400 font-bold">
-                <i data-lucide="check-circle" class="w-4 h-4"></i>
-                <span>آیا در صورت خاموش بودن لپ‌تاپ ربات کار می‌کند؟</span>
-              </div>
-              <p class="text-[11px] text-slate-300">
-                <strong class="text-white">بله، کاملاً!</strong> پیام‌های مشتریان، انتخاب پلن، ارسال شماره کارت و دریافت تصویر فیش واریزی مستقیماً توسط وب‌هوک گوگل پردازش شده و در گوگل شیت ذخیره می‌شود. نیازی به روشن بودن لپ‌تاپ، اجرای پایتون یا باز بودن پنل نیست.
-              </p>
-            </div>
-            <div class="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/20 space-y-1">
-              <span class="font-bold text-cyan-300 block">نحوه اتصال ربات تلگرام به وب‌هوک ابری:</span>
-              <p class="text-[11px] text-slate-300">
-                کافیست توکن ربات فروش را در بخش تنظیمات وارد کرده و بر روی کلید «تست و همگام‌سازی وب‌هوک ۲۴/۷» کلیک کنید.
-              </p>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-1.5">
+              <div class="font-bold text-cyan-300">مراحل فعال‌سازی ایجنت اختصاصی:</div>
+              <p class="text-[11px] text-slate-300">۱. وارد تب <b>«ایجنت و انتشار سریع»</b> شوید.</p>
+              <p class="text-[11px] text-slate-300">۲. در فرم درخواست سناریو، موضوع، نوع محتوا (متن/تصویر) و ساعات دلخواه خود را بنویسید یا مستقیماً به <b>@AvexRad</b> پیام دهید.</p>
+              <p class="text-[11px] text-slate-300">۳. پس از هماهنگی (بسته به نوع سناریو، رایگان یا با تعرفه توافقی)، تیم فنی ایجنت اختصاصی را به پنل شما متصل می‌کند و گزارش تمام ارسال‌ها را در پنل خود خواهید دید.</p>
             </div>
           </div>
         </div>
@@ -1137,11 +1121,11 @@
         <!-- ۲. راهنمای اتصال پلتفرم‌ها (تلگرام، بله، روبیکا و نکته فنی ایتا) -->
         <div class="p-5 rounded-2xl glass-panel space-y-4">
           <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h4 class="font-bold text-sm text-purple-300 flex items-center gap-2">
-              <i data-lucide="share-2" class="w-4 h-4 text-purple-400"></i>
+            <h4 class="font-bold text-sm text-cyan-300 flex items-center gap-2">
+              <i data-lucide="share-2" class="w-4 h-4 text-cyan-400"></i>
               <span>۲. راهنمای اتصال کانال‌ها (۴ پیام‌رسان)</span>
             </h4>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">مستقل و تفکیک‌شده</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">مستقل و تفکیک‌شده</span>
           </div>
           <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
             <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5">
@@ -1174,18 +1158,18 @@
                 <span>نکته فنی ویژه پیام‌رسان ایتا (Eitaa):</span>
               </div>
               <p class="text-[11px] text-amber-100/80 leading-relaxed">
-                برخلاف تلگرام، ایتا ربات‌ساز عمومی ندارد. بنابراین برای انتشار خودکار در کانال ایتا، باید از <strong class="text-white">وب‌سرویس ایتا‌یار (eitaayar.com)</strong> استفاده شود. توکن وب‌سرویس ایتا‌یار خود را در فیلد مربوطه در مودال اتصال وارد کنید.
+                برای انتشار در کانال ایتا، از <strong class="text-white">وب‌سرویس ایتا‌یار (eitaayar.com)</strong> استفاده می‌شود. توکن وب‌سرویس ایتا‌یار خود را در مودال اتصال وارد کنید.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- ۳. راهنمای کلیدها و مکانیزم خلبان خودکار -->
+        <!-- ۳. راهنمای کلیدها و خلبان خودکار -->
         <div class="p-5 rounded-2xl glass-panel space-y-4">
           <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2">
               <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
-              <span>۳. راهنمای کلیدها و خلبان خودکار (Autopilot)</span>
+              <span>۳. راهنمای خلبان خودکار و زمان‌بندی</span>
             </h4>
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">اتوماسیون هوشمند</span>
           </div>
@@ -1196,17 +1180,7 @@
                 <span>کلید خلبان خودکار (Master Autopilot):</span>
               </span>
               <p class="text-[11px] text-slate-300">
-                وقتی روشن است، سیستم بدون نیاز به تایید دستی، در ساعات مقرر موضوعات وب را پایش کرده، تولید محتوا می‌کند و به کانال‌های فعال می‌فرستد. اگر خاموش باشد، محتواها به شکل پیش‌نویس در انتظار تایید شما می‌مانند.
-              </p>
-            </div>
-
-            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
-              <span class="font-bold text-white flex items-center gap-1.5">
-                <i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i>
-                <span>کلید دستی رسانه روزانه (Media Override):</span>
-              </span>
-              <p class="text-[11px] text-slate-300">
-                برای هر کانال مستقل تعیین می‌کند که آیا همراه با متن پست، پوستر گرافیکی تولید شود یا خیر. این کلید برای مدیریت مصرف بهینه سهمیه روزانه طراحی شده است.
+                وقتی روشن است، سناریوهای زمان‌بندی‌شده ایجنت اختصاصی شما طبق ساعات تعیین‌شده به‌صورت خودکار اجرا می‌شوند. در صورت خاموش کردن، ارسال‌های خودکار متوقف می‌مانند.
               </p>
             </div>
 
@@ -1216,29 +1190,29 @@
                 <span>زمان تا پست بعدی خودکار:</span>
               </span>
               <p class="text-[11px] text-slate-300">
-                تایمر زنده نشان‌دهنده فاصله زمانی تا اسلات زمان‌بندی بعدی (ساعات ۹:۰۰، ۱۴:۰۰، ۱۸:۰۰ یا ۲۲:۰۰) است. هنگامی که هیچ کانالی متصل نباشد یا خلبان خودکار غیرفعال باشد، این شمارشگر در وضعیت استراحت قرار می‌گیرد.
+                تایمر زنده نشان‌دهنده فاصله زمانی تا اسلات زمان‌بندی بعدی است. هنگامی که هیچ کانالی متصل نباشد یا خلبان خودکار غیرفعال باشد، شمارشگر در وضعیت استراحت قرار می‌گیرد.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- ۴. مصرف توکن‌های AI و سقف پلن‌ها -->
+        <!-- ۴. راهنمای انتشار همزمان و سقف کانال‌ها -->
         <div class="p-5 rounded-2xl glass-panel space-y-4">
           <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <h4 class="font-bold text-sm text-emerald-300 flex items-center gap-2">
-              <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
-              <span>۴. مصرف توکن‌های هوش مصنوعی و سهمیه‌ها</span>
+              <i data-lucide="send" class="w-4 h-4 text-emerald-400"></i>
+              <span>۴. انتشار همزمان و سقف اتصال کانال‌ها</span>
             </h4>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Gemini 2.0 Flash</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">کاربردی</span>
           </div>
           <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
             <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
               <span class="font-bold text-white flex items-center gap-1.5">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-                <span>میزان مصرف توکن در هر پست:</span>
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>انتشار همزمان چندکاناله:</span>
               </span>
               <p class="text-[11px] text-slate-300">
-                هر پست هوشمند به طور متوسط بین <strong class="text-cyan-300">۴۰۰ الی ۸۰۰ توکن</strong> مصرف می‌کند (شامل تحلیل پرامپت، بررسی حقایق Fact-Checking، اعمال لحن اختصاصی و درج امضا).
+                در بخش «ایجنت و انتشار سریع»، می‌توانید متن، تصویر یا ویدیوی آماده خود را بارگذاری کنید و با یک کلیک همزمان در تمام کانال‌های متصل خود منتشر نمایید.
               </p>
             </div>
 
@@ -1248,17 +1222,7 @@
                 <span>قانون سقف تعداد کانال‌ها:</span>
               </span>
               <p class="text-[11px] text-slate-300">
-                تعداد کانال‌های مجاز سقف کل است. به عنوان مثال اگر کاربر پلن پایه با سقف ۱ کانال داشته باشد، می‌تواند ۱ کانال را روی تلگرام، یا بله یا ایتا متصل کند. اگر بخواهد همان کانال را هم در ایتا و هم در بله داشته باشد، ۲ اتصال شمرده شده و نیاز به ارتقا به پلن حرفه‌ای خواهد داشت.
-              </p>
-            </div>
-
-            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
-              <span class="font-bold text-white flex items-center gap-1.5">
-                <i data-lucide="video" class="w-3.5 h-3.5 text-cyan-400"></i>
-                <span>سهمیه رندر تصویر و ریلز:</span>
-              </span>
-              <p class="text-[11px] text-slate-300">
-                سهمیه بنر روزانه ۱۰ عدد و ریلز حداکثر ۶۰ ثانیه در روز است که هر شب ساعت ۰۰:۰۰ به صورت خودکار در دیتابیس ریست می‌شود.
+                تعداد کانال‌های مجاز سقف کل پلتفرم‌های متصل است (پایه: ۳ کانال، پیشرفته: ۵ کانال، حرفه‌ای: ۸ کانال). هر اتصال در تلگرام، بله، ایتا یا روبیکا به عنوان یک کانال محاسبه می‌شود.
               </p>
             </div>
           </div>
@@ -1406,6 +1370,77 @@
               <!-- با JS پر می‌شود -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- بخش مدیریت جایگاه تبلیغات سراسری پنل -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-amber-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div>
+            <h3 class="font-bold text-sm text-amber-300 flex items-center gap-2">
+              <i data-lucide="megaphone" class="w-4 h-4 text-amber-400"></i>
+              <span>مدیریت جایگاه تبلیغات سراسری پنل (برای همه کاربران)</span>
+            </h3>
+            <p class="text-xs text-slate-400">تنظیم بنر تبلیغاتی در صفحه اصلی پنل همه کاربران با نشان AD</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">عنوان تبلیغ:</label>
+            <input type="text" id="admAdTitleInput" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" placeholder="مثال: تخفیف ویژه خدمات طراحی سایت اَوِکس راد">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">توضیح کوتاه تبلیغ:</label>
+            <input type="text" id="admAdTextInput" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" placeholder="توضیح تبلیغ برای نمایش به همه کاربران...">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">لینک دکمه (اختیاری):</label>
+            <input type="text" id="admAdLinkInput" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-cyan-300 ltr" placeholder="https://t.me/AvexRad">
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+            <input type="checkbox" id="admAdActiveCheckbox" class="accent-amber-500" checked>
+            <span>نمایش این تبلیغ برای همه کاربران فعال باشد</span>
+          </label>
+          <button type="button" onclick="saveAdminGlobalAd()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition cursor-pointer">
+            ذخیره و انتشار تبلیغ
+          </button>
+        </div>
+      </div>
+
+      <!-- بخش مدیریت و تغییر اطلاعات ورود مدیران ارشد (امیرعلی و امیرمهدی) -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-cyan-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div>
+            <h3 class="font-bold text-sm text-cyan-300 flex items-center gap-2">
+              <i data-lucide="key-round" class="w-4 h-4 text-cyan-400"></i>
+              <span>مدیریت نام کاربری و رمز عبور مدیران ارشد</span>
+            </h3>
+            <p class="text-xs text-slate-400">تغییر نام کاربری یا رمز عبور امیرعلی و امیرمهدی (همگام در دیتابیس)</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">انتخاب مدیر:</label>
+            <select id="admCredTargetSelect" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
+              <option value="AmirAli_AvexRad">امیرعلی عبدالعظیمی</option>
+              <option value="AmirMahdi_AvexRad">امیرمهدی افضلی</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">نام کاربری جدید (اختیاری):</label>
+            <input type="text" id="admCredNewUsername" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white ltr" placeholder="خالی = بدون تغییر">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] text-slate-400">رمز عبور جدید:</label>
+            <input type="text" id="admCredNewPassword" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-amber-300 ltr" placeholder="رمز عبور جدید">
+          </div>
+          <div class="flex items-end">
+            <button type="button" onclick="updateAdminCredentials()" class="w-full py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition cursor-pointer">
+              ذخیره تغییرات مدیر
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1642,39 +1677,12 @@
           <span>جهت حفظ امنیت، تغییر نام کاربری و رمز عبور منحصراً از طریق پشتیبان فنی اَوِکس‌راد (@AvexRad) انجام می‌شود.</span>
         </div>
 
-        <!-- نوارهای سهمیه و منابع فعال حساب -->
+        <!-- اطلاعات سقف کانال‌های حساب -->
         <div class="space-y-2.5 pt-2 border-t border-white/10">
-          <div class="font-bold text-slate-200 flex items-center justify-between">
-            <span>سهمیه‌های مصرفی امروز:</span>
-            <span class="text-cyan-400 text-[10px]">ریست خودکار در ۰۰:۰۰ بامداد</span>
-          </div>
-
-          <!-- سهمیه عکس -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <span class="flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5 text-purple-400"></i> پوستر هوشمند:</span>
-              <span id="profileImageQuotaLabel" class="font-bold text-purple-300 persian-nums">۱۰ از ۱۰ باقی‌مانده</span>
-            </div>
-            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div id="profileImageQuotaBar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-1.5 rounded-full" style="width: 100%"></div>
-            </div>
-          </div>
-
-          <!-- سهمیه ویدیو -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <span class="flex items-center gap-1.5"><i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i> ریلز سبک:</span>
-              <span id="profileVideoQuotaLabel" class="font-bold text-cyan-300 persian-nums">۶۰ ثانیه در روز</span>
-            </div>
-            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div id="profileVideoQuotaBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full" style="width: 100%"></div>
-            </div>
-          </div>
-
           <!-- سقف کانال‌ها -->
           <div class="space-y-1">
             <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <span class="flex items-center gap-1.5"><i data-lucide="radio" class="w-3.5 h-3.5 text-emerald-400"></i> سقف کانال‌ها:</span>
+              <span class="flex items-center gap-1.5"><i data-lucide="radio" class="w-3.5 h-3.5 text-emerald-400"></i> کانال‌های متصل:</span>
               <span id="profileChannelQuotaLabel" class="font-bold text-emerald-300 persian-nums">۰ از ۸ متصل</span>
             </div>
             <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
