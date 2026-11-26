@@ -20,6 +20,10 @@ function filterCleanChannels(list, isSuperAdmin) {
     if (!isSuperAdmin && (c.isOfficial || idLower.startsWith("avexrad-official-"))) {
       return false;
     }
+    // پاکسازی اعداد تستی قدیمی ذخیره‌شده در کش مرورگر
+    if (c.isOfficial && !c._realStatsFetched && (c.membersCount === 120 || c.membersCount === 85 || c.membersCount === 95)) {
+      c.membersCount = null;
+    }
     return true;
   });
 }
@@ -2281,8 +2285,10 @@ function renderAnalyticsPerChannel() {
       memberDisplay = `<span class="text-xs text-rose-300 font-bold">پشتیبانی نمی‌شود (محدودیت API ${meta.label.split(" ")[0]})</span>`;
     } else if (typeof ch.membersCount === "number") {
       memberDisplay = `<span class="text-2xl font-black text-white persian-nums">${ch.membersCount.toLocaleString("fa-IR")}</span> <span class="text-xs text-slate-400">عضو واقعی</span>`;
+    } else if (ch.platform === "bale") {
+      memberDisplay = `<span class="text-xs text-amber-300 font-bold">دریافت از طریق لینک پنل ابری (GAS)</span>`;
     } else {
-      memberDisplay = `<span class="text-xs text-amber-300">در حال استعلام زنده...</span>`;
+      memberDisplay = `<span class="text-xs text-amber-300">در انتظار استعلام زنده...</span>`;
     }
 
     return `
@@ -2321,14 +2327,15 @@ async function fetchRealChannelMemberCounts(notify = false) {
         const data = await res.json();
         if (data && data.ok && typeof data.result === "number") {
           ch.membersCount = data.result;
+          ch._realStatsFetched = true;
         }
       } catch (e) {}
     } else if (ch.platform === "bale") {
       try {
-        const res = await fetch(`https://tapi.bale.ai/bot${rawToken}/getChatMembersCount?chat_id=${encodeURIComponent(ch.target)}`);
-        const data = await res.json();
+        const data = await callGasApi("channel/get_member_count", { platform: "bale", token: rawToken, target: ch.target });
         if (data && data.ok && typeof data.result === "number") {
           ch.membersCount = data.result;
+          ch._realStatsFetched = true;
         }
       } catch (e) {}
     } else {
