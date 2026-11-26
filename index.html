@@ -940,38 +940,47 @@
               <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i>
               <span>تقویم بصری و صف انتشار زمان‌بندی‌شده</span>
             </h3>
-            <p class="text-xs text-slate-400">مشاهده صف پست‌های امروز، فردا و سناریوهای تکرارشونده</p>
+            <p class="text-xs text-slate-400">مشاهده تاریخ روز، صف پست‌های واقعی و نمونه‌های پیشنهادی برای ایجنت اختصاصی</p>
           </div>
-          <button onclick="openNewPostModal()" class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5">
-            <i data-lucide="clock" class="w-4 h-4"></i>
-            <span>افزودن پست زمان‌بندی‌شده</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="schedulerLiveDateBanner" class="text-[11px] px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold">
+              در حال بارگذاری تاریخ...
+            </span>
+            <button onclick="openNewPostModal()" class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="clock" class="w-4 h-4"></i>
+              <span>افزودن پست به صف</span>
+            </button>
+          </div>
         </div>
 
-        <!-- سناریوهای هوشمند فعال -->
+        <!-- راهنما و نمونه‌های پیشنهادی زمان‌بندی -->
+        <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200 flex items-center justify-between gap-2">
+          <span>💡 <b>نمونه‌های پیشنهادی و الهام‌بخش (راهنما):</b> این موارد صرفاً جهت ایده هستند؛ بسته به موضوع کانال شما (آموزشی، فروشگاهی، خبری، خدماتی و...)، ایجنت اختصاصی دقیقاً متناسب با نیاز شما تنظیم می‌شود.</span>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 space-y-1">
             <div class="flex items-center justify-between text-xs">
               <span class="font-bold text-cyan-300">پست صبحگاهی هوشمند</span>
-              <span class="text-emerald-400 text-[10px]">فعال (هر روز ۹:۰۰)</span>
+              <span class="text-slate-400 text-[10px] px-2 py-0.5 rounded bg-slate-800">نمونه پیشنهادی (۰۹:۰۰)</span>
             </div>
-            <p class="text-[11px] text-slate-400">تولید خودکار محتوای تخصصی + بنر گرافیکی متناسب با موضوع کانال</p>
+            <p class="text-[11px] text-slate-400">مثال: تولید و ارسال محتوای تخصصی صبحگاهی + بنر گرافیکی متناسب با حوزه کانال شما</p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 space-y-1">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-purple-300">اخبار و ترندهای فوری</span>
-              <span class="text-emerald-400 text-[10px]">فعال (بین ۱۲ تا ۱۸)</span>
+              <span class="font-bold text-purple-300">رصد موضوعات و ترندهای روز</span>
+              <span class="text-slate-400 text-[10px] px-2 py-0.5 rounded bg-slate-800">نمونه پیشنهادی (۱۲ تا ۱۸)</span>
             </div>
-            <p class="text-[11px] text-slate-400">رصد رویدادهای مهم حوزه کانال و نگارش پیش‌نویس آماده انتشار</p>
+            <p class="text-[11px] text-slate-400">مثال: رصد رویدادها یا نکات مهم مرتبط با موضوع کانال شما و آماده‌سازی پست</p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 space-y-1">
             <div class="flex items-center justify-between text-xs">
               <span class="font-bold text-amber-300">جمع‌بندی شبانه کانال</span>
-              <span class="text-emerald-400 text-[10px]">فعال (هر شب ۲۱:۳۰)</span>
+              <span class="text-slate-400 text-[10px] px-2 py-0.5 rounded bg-slate-800">نمونه پیشنهادی (۲۱:۳۰)</span>
             </div>
-            <p class="text-[11px] text-slate-400">جدول نهایی نوسانات روزانه + فایل صوتی یا اسلایدشو</p>
+            <p class="text-[11px] text-slate-400">مثال: خلاصه نکات یا مطالب مهم روز + دعوت مخاطبان به تعامل و پرسش‌وپاسخ</p>
           </div>
         </div>
 
@@ -1018,52 +1027,56 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- نمودار رشد عضوگیری -->
-        <div class="p-5 rounded-2xl glass-panel space-y-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i>
-              <span>روند عضوگیری در ۷ روز گذشته</span>
-            </h3>
-            <span class="text-xs text-slate-400">اعضای جدید در برابر ریزش</span>
-          </div>
-          <div class="w-full h-64">
-            <canvas id="growthChartCanvas"></canvas>
-          </div>
-        </div>
-
-        <!-- هیت‌مپ بهترین ساعات تعامل (Heatmap) -->
-        <div class="p-5 rounded-2xl glass-panel space-y-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
-              <span>بهترین ساعات تعامل و بازدید مخاطبان (Heatmap)</span>
-            </h3>
-            <span class="text-xs text-emerald-400 font-bold">بیشترین: ساعت ۱۴:۰۰ تا ۱۷:۰۰</span>
-          </div>
-          <div class="w-full h-64">
-            <canvas id="heatmapChartCanvas"></canvas>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ابزار ساخت و انتشار نمودار در کانال (Chart-to-Channel) -->
-      <div class="p-5 rounded-2xl glass-panel space-y-4">
-        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <!-- هدر آمار زنده و شفافیت API پیام‌رسان‌ها -->
+      <div class="p-5 rounded-2xl glass-panel space-y-4 border border-cyan-500/20">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
           <div>
             <h3 class="font-bold text-sm text-white flex items-center gap-2">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-purple-400"></i>
-              <span>ابزار انتشار مستقیم نمودار در کانال (Chart-to-Channel)</span>
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-cyan-400"></i>
+              <span>آمار واقعی و زنده به تفکیک هر پیام‌رسان</span>
             </h3>
-            <p class="text-xs text-slate-400">تولید تصویر نمودار آماری با برند و رنگ اختصاصی کانال و ارسال خودکار با متن تحلیل</p>
+            <p class="text-xs text-slate-400" id="analyticsLiveDateText">در حال دریافت تاریخ و آمار زنده از سرور پیام‌رسان‌ها...</p>
           </div>
-          <button onclick="publishChartToCurrentChannel()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs hover:brightness-110 transition flex items-center gap-1.5 shadow-md shadow-purple-600/20">
-            <i data-lucide="share-2" class="w-4 h-4"></i>
-            <span>تولید و ارسال نمودار به کانال فعال</span>
+          <button type="button" id="btnRefreshLiveStats" onclick="fetchRealChannelMemberCounts(true)" class="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>استعلام زنده اعضا از API</span>
           </button>
+        </div>
+
+        <!-- کارت‌های جداگانه هر کانال -->
+        <div id="analyticsPerChannelGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- با JS پر می‌شود -->
+        </div>
+      </div>
+
+      <!-- جدول شفافیت قابلیت‌ها و محدودیت‌های API پیام‌رسان‌ها -->
+      <div class="p-5 rounded-2xl glass-panel space-y-3 border border-white/10">
+        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
+          <span>شفافیت قابلیت‌های آماری در API رسمی پیام‌رسان‌ها</span>
+        </h3>
+        <p class="text-xs text-slate-400">این پنل از نمایش هرگونه عدد تخمینی یا ساختگی خودداری می‌کند و فقط داده‌های واقعی ارائه‌شده توسط API هر پیام‌رسان را نشان می‌دهد:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-cyan-500/20 space-y-1">
+            <div class="font-bold text-cyan-300">تلگرام (Telegram)</div>
+            <div class="text-[11px] text-emerald-400">✅ تعداد اعضای زنده کانال (واقعی)</div>
+            <div class="text-[11px] text-slate-400">❌ تاریخچه رشد ۷ روزه و بازدید (محدودیت Bot API)</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-emerald-500/20 space-y-1">
+            <div class="font-bold text-emerald-300">بله (Bale)</div>
+            <div class="text-[11px] text-emerald-400">✅ تعداد اعضای زنده کانال (واقعی)</div>
+            <div class="text-[11px] text-slate-400">❌ تاریخچه رشد ۷ روزه و بازدید (محدودیت API)</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-amber-500/20 space-y-1">
+            <div class="font-bold text-amber-300">ایتا (Eitaa)</div>
+            <div class="text-[11px] text-emerald-400">✅ ارسال پست و فایل</div>
+            <div class="text-[11px] text-rose-400">❌ دریافت آمار اعضا و بازدید در API ایتا ارائه نمی‌شود</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-purple-500/20 space-y-1">
+            <div class="font-bold text-purple-300">روبیکا (Rubika)</div>
+            <div class="text-[11px] text-emerald-400">✅ اتصال کانال</div>
+            <div class="text-[11px] text-rose-400">❌ دریافت آمار اعضا و بازدید در Bot API عمومی ارائه نمی‌شود</div>
+          </div>
         </div>
       </div>
 
