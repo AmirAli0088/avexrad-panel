@@ -1042,6 +1042,7 @@ function checkChannelGatekeeper() {
 function openMobileDrawer() {
   const drawer = document.getElementById("mobileDrawer");
   const backdrop = document.getElementById("drawerBackdrop");
+  const hamburgerBox = document.getElementById("hamburgerLinesBox");
   if (!drawer || !backdrop) return;
 
   drawer.classList.remove("hidden");
@@ -1051,11 +1052,12 @@ function openMobileDrawer() {
   setTimeout(() => {
     drawer.classList.add("open");
     backdrop.classList.add("open");
+    if (hamburgerBox) hamburgerBox.classList.add("active");
   }, 10);
 
   // به‌روزرسانی بخش سوپر ادمین داخل منوی کشویی
   const isSuper = (AppState.user && AppState.user.planId === "super_admin");
-  const drawerAdminBtn = document.getElementById("drawerTabAdmin");
+  const drawerAdminBtn = document.getElementById("drawerTabAdminOrders");
   if (drawerAdminBtn) {
     if (isSuper) {
       drawerAdminBtn.classList.remove("hidden");
@@ -1073,19 +1075,10 @@ function openMobileDrawer() {
 
 function toggleMobileDrawer() {
   const drawer = document.getElementById("mobileDrawer");
-  const backdrop = document.getElementById("drawerBackdrop");
-  const hamburgerBox = document.getElementById("hamburgerLinesBox");
-  if (!drawer || !backdrop) return;
+  if (!drawer) return;
 
-  const isHidden = drawer.classList.contains("hidden");
-  if (isHidden) {
-    drawer.classList.remove("hidden");
-    backdrop.classList.remove("hidden");
-    setTimeout(() => {
-      drawer.classList.add("open");
-      backdrop.classList.add("open");
-      if (hamburgerBox) hamburgerBox.classList.add("active");
-    }, 10);
+  if (!drawer.classList.contains("open")) {
+    openMobileDrawer();
   } else {
     closeMobileDrawer();
   }
@@ -1100,11 +1093,6 @@ function closeMobileDrawer() {
   drawer.classList.remove("open");
   backdrop.classList.remove("open");
   if (hamburgerBox) hamburgerBox.classList.remove("active");
-
-  setTimeout(() => {
-    drawer.classList.add("hidden");
-    backdrop.classList.add("hidden");
-  }, 300);
 }
 
 function saveCurrentChannelSettings() {
