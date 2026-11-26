@@ -338,6 +338,9 @@ function handleLoginSubmit(event) {
     } catch(e) {}
   }
 
+  const btnSubmit = document.getElementById("btnLoginSubmit");
+  if (btnSubmit && btnSubmit.disabled) return false;
+
   clearLoginInputErrors();
   const errBox = document.getElementById("loginErrorBox");
   if (errBox) errBox.classList.add("hidden");
@@ -348,7 +351,6 @@ function handleLoginSubmit(event) {
   const password = (passwordInput ? passwordInput.value : "").trim();
 
   const cardBox = document.getElementById("loginCardBox");
-  const btnSubmit = document.getElementById("btnLoginSubmit");
   const btnSpinner = document.getElementById("btnLoginSpinner");
   const btnIcon = document.getElementById("btnLoginIcon");
   const btnText = document.getElementById("btnLoginText");
@@ -517,6 +519,10 @@ function loginSuccess(user, notify = true) {
 
   AppState.user = user;
   localStorage.setItem("AVEXRAD_AUTH_USER", JSON.stringify(user));
+
+  clearLoginInputErrors();
+  const errBox = document.getElementById("loginErrorBox");
+  if (errBox) errBox.classList.add("hidden");
 
   document.getElementById("loginScreenView").classList.add("hidden");
   document.getElementById("dashboardAppView").classList.remove("hidden");
