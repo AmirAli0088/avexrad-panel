@@ -634,7 +634,7 @@ function applyPlanRole(planId) {
   if (AppState.user) {
     AppState.user.planId = planId;
   }
-  AppState.currentPlan = (window.AVEXRAD_PLANS && AVEXRAD_PLANS[planId]) || (window.AVEXRAD_PLANS ? AVEXRAD_PLANS.basic : {});
+  AppState.currentPlan = (typeof AVEXRAD_PLANS !== "undefined" && AVEXRAD_PLANS[planId]) || (typeof AVEXRAD_PLANS !== "undefined" ? AVEXRAD_PLANS.basic : {});
   
   const isSuper = (planId === "super_admin");
   const banner = document.getElementById("superAdminBanner");
