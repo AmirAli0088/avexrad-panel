@@ -11,7 +11,7 @@
   <!-- Chart.js CDN for Analytics & Heatmap -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=3.0">
+  <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body class="text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
 
@@ -598,6 +598,31 @@
         <div id="channelButtonsContainer" class="flex items-center gap-2 overflow-x-auto pb-1">
           <!-- با جاوااسکریپت پر می‌شود -->
         </div>
+
+        <!-- دسته‌بندی کانال‌ها (برای همه پلن‌ها) -->
+        <div class="pt-3 border-t border-white/10 space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="folder-kanban" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>دسته‌بندی کانال‌های من (ارسال گروهی):</span>
+            </span>
+            <button type="button" onclick="createChannelCategory()" class="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 text-[11px] font-bold transition cursor-pointer">
+              + افزودن دسته‌بندی
+            </button>
+          </div>
+          <div id="channelCategoriesBar" class="flex flex-wrap items-center gap-2 text-xs">
+            <!-- با جاوااسکریپت پر می‌شود -->
+          </div>
+        </div>
+      </div>
+
+      <!-- پیام وضعیت خالی هنگام نداشتن کانال -->
+      <div id="noChannelSelectedNotice" class="hidden p-8 rounded-2xl glass-panel text-center space-y-3 border border-dashed border-cyan-500/30">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+          <i data-lucide="radio" class="w-6 h-6"></i>
+        </div>
+        <h4 class="font-bold text-sm text-white">هنوز هیچ کانالی متصل نشده است</h4>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">برای مشاهده و پیکربندی تنظیمات هر کانال، ابتدا از دکمه «افزودن کانال جدید» در بالا یک کانال (تلگرام، بله، روبیکا یا ایتا) متصل نمایید.</p>
       </div>
 
       <!-- پنل تنظیمات کانال فعال انتخاب‌شده -->
@@ -616,16 +641,18 @@
               </div>
             </div>
 
-            <!-- کلید دستی رسانه روزانه (Media Override Switch) -->
-            <div class="flex items-center gap-3 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-white/10 shadow-inner">
-              <span class="text-xs font-semibold text-slate-300">تولید تصویر در امروز:</span>
-              <label class="switch-container">
-                <input type="checkbox" id="mediaOverrideSwitch" onchange="toggleMediaOverride(this)" checked class="sr-only">
-                <div class="switch-track switch-track-cyan">
-                  <div class="switch-thumb"></div>
-                </div>
-              </label>
-              <span id="mediaOverrideStatusLabel" class="text-[11px] font-bold text-cyan-400 min-w-[36px]">فعال</span>
+            <!-- کلید وضعیت ارسال خودکار برای این کانال -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-white/10 shadow-inner" title="تعیین می‌کند که آیا ارسال‌های خودکار ایجنت و زمان‌بندی برای این کانال فعال باشد یا خیر">
+              <span class="text-xs font-semibold text-slate-300">ارسال خودکار برای این کانال:</span>
+              <div class="flex items-center gap-2">
+                <label class="switch-container">
+                  <input type="checkbox" id="mediaOverrideSwitch" onchange="toggleMediaOverride(this)" checked class="sr-only">
+                  <div class="switch-track switch-track-cyan">
+                    <div class="switch-thumb"></div>
+                  </div>
+                </label>
+                <span id="mediaOverrideStatusLabel" class="text-[11px] font-bold text-cyan-400 min-w-[36px]">فعال</span>
+              </div>
             </div>
           </div>
 
@@ -710,7 +737,7 @@
           <div class="p-3 rounded-xl bg-slate-900/90 border border-white/5 space-y-1">
             <div class="flex items-center justify-between text-xs text-slate-400">
               <span>زمان تا پست بعدی خودکار:</span>
-              <span class="font-bold text-cyan-300 persian-nums" id="nextPostCountdown">۰۸:۲۲ دقیقه</span>
+              <span class="font-bold text-cyan-300 persian-nums" id="channelNextPostCountdown">غیرفعال</span>
             </div>
             <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div class="bg-gradient-to-r from-cyan-500 to-purple-500 h-1.5 rounded-full" style="width: 65%"></div>
@@ -870,6 +897,12 @@
           <!-- ستون چپ: انتخاب کانال‌های مقصد و دکمه ارسال -->
           <div class="p-4 rounded-xl bg-slate-900/80 border border-white/10 flex flex-col justify-between space-y-4">
             <div class="space-y-2.5">
+              <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">انتخاب سریع بر اساس دسته‌بندی:</label>
+                <select id="pubCategorySelector" onchange="applyPublisherCategory(this.value)" class="w-full bg-slate-950 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-purple-300 focus:outline-none">
+                  <option value="">همه / انتخاب دستی</option>
+                </select>
+              </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-white">کانال‌های مقصد:</span>
                 <button type="button" onclick="selectAllPublisherChannels()" class="text-[11px] text-cyan-400 hover:text-cyan-300 cursor-pointer font-bold">انتخاب همه</button>
@@ -1347,6 +1380,14 @@
           </div>
         </div>
 
+        <!-- دسته‌بندی و فیلتر سفارشات -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <button type="button" onclick="setOrderFilter('all')" id="ordFilter_all" class="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold cursor-pointer">همه سفارشات</button>
+          <button type="button" onclick="setOrderFilter('pending')" id="ordFilter_pending" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 font-bold cursor-pointer">در انتظار تایید</button>
+          <button type="button" onclick="setOrderFilter('approved')" id="ordFilter_approved" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 font-bold cursor-pointer">تاییدشده (اکانت‌ها)</button>
+          <button type="button" onclick="setOrderFilter('rejected')" id="ordFilter_rejected" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 font-bold cursor-pointer">رد شده</button>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-xs text-right">
             <thead>
@@ -1482,8 +1523,8 @@
   <!-- ========================================================================= -->
   <!-- ۹. مودال اتصال و بررسی سلامت ربات (One-Click Bot Connector)               -->
   <!-- ========================================================================= -->
-  <div id="channelModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="w-full max-w-xl glass-panel rounded-2xl p-6 space-y-5 border border-cyan-500/30 shadow-2xl relative">
+  <div id="channelModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="w-full max-w-xl glass-panel rounded-2xl p-4 sm:p-6 space-y-4 border border-cyan-500/30 shadow-2xl relative max-h-[92vh] overflow-y-auto my-auto">
       
       <div class="flex items-center justify-between border-b border-white/10 pb-3">
         <h3 class="font-bold text-base text-white flex items-center gap-2">
@@ -1570,9 +1611,9 @@
 
       </div>
 
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
-        <button onclick="closeModal('channelModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition">انصراف</button>
-        <button onclick="submitSaveChannel()" id="btnSaveChannelModal" class="px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition">ذخیره کانال در پنل</button>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10 sticky bottom-0 bg-slate-950/95 pb-1">
+        <button type="button" onclick="closeModal('channelModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition cursor-pointer">انصراف</button>
+        <button type="button" onclick="submitSaveChannel()" id="btnSaveChannelModal" class="px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition cursor-pointer">ذخیره کانال در پنل</button>
       </div>
 
     </div>
@@ -1822,8 +1863,8 @@
   </div> <!-- پایان dashboardAppView -->
 
   <!-- بارگذاری اسکریپت اصلی پنل -->
-  <script src="plans_config.js?v=3.1"></script>
-  <script src="app.js?v=3.1"></script>
+  <script src="plans_config.js?v=3.2"></script>
+  <script src="app.js?v=3.2"></script>
   <script>
     // فعال‌سازی آیکون‌های Lucide
     lucide.createIcons();
